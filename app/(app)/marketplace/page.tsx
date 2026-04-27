@@ -11,13 +11,8 @@ export default async function MarketplacePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
 
-  const [{ data: categories }, { data: featured }, { data: recent }] = await Promise.all([
+  const [{ data: categories }, { data: recent }] = await Promise.all([
     db.from('categories').select('*').eq('active', true).order('sort_order'),
-    db.from('businesses')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-      .limit(4),
     db.from('businesses')
       .select('*')
       .eq('status', 'published')
@@ -58,24 +53,7 @@ export default async function MarketplacePage() {
         {categories && <CategoryGrid categories={categories} />}
       </section>
 
-      {/* Featured listings */}
-      {featured && featured.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Trending in EO</h2>
-            <Link href="/marketplace/search" className="text-sm text-primary hover:underline">
-              View All →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {featured.map((b: Parameters<typeof ListingCard>[0]['business']) => (
-              <ListingCard key={b.id} business={b} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Recent */}
+      {/* Listings — sponsored injection added in P4-T6 */}
       {recent && recent.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
