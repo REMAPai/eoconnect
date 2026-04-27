@@ -1,65 +1,56 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="flex items-center justify-between px-6 py-5 border-b border-border">
+        <span className="text-2xl font-extrabold tracking-tight">
+          EO<span className="text-primary">connect</span>
+        </span>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link href="/auth/login">
+            <Button variant="outline" size="sm">Sign In</Button>
+          </Link>
+          <Link href="/auth/signup">
+            <Button className="bg-primary text-primary-foreground font-bold" size="sm">
+              Join Now
+            </Button>
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <main className="flex-1 flex flex-col items-center justify-center text-center px-4">
+        <div className="max-w-2xl">
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-4">
+            Exclusive to EO Members
+          </p>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+            The B2B marketplace<br />built for founders
+          </h1>
+          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+            Discover, hire, and promote within your trusted EO network. No cold outreach — just deals with people already in the room.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/auth/signup">
+              <Button size="lg" className="bg-primary text-primary-foreground font-bold px-8">
+                Request Access
+              </Button>
+            </Link>
+            <Link href="/auth/login">
+              <Button size="lg" variant="outline" className="px-8">
+                Sign In
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
+
+      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
+        © {new Date().getFullYear()} EOconnect · Exclusive to EO Members
+      </footer>
     </div>
-  );
+  )
 }
