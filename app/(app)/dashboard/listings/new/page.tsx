@@ -5,7 +5,7 @@ import { NewListingClient } from './new-listing-client'
 export default async function NewListingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any

@@ -38,7 +38,7 @@ export function ResetPasswordForm() {
           <p className="text-muted-foreground text-sm">
             We sent a password reset link to your email address.
           </p>
-          <Link href="/auth/login" className="text-primary text-sm font-medium hover:underline block mt-4">
+          <Link href="/login" className="text-primary text-sm font-medium hover:underline block mt-4">
             Back to login
           </Link>
         </div>
@@ -74,7 +74,7 @@ export function ResetPasswordForm() {
             {isPending ? 'Sending…' : isSettingNew ? 'Update Password' : 'Send Reset Link'}
           </Button>
         </form>
-        <Link href="/auth/login" className="text-primary text-sm font-medium hover:underline block text-center mt-4">
+        <Link href="/login" className="text-primary text-sm font-medium hover:underline block text-center mt-4">
           Back to login
         </Link>
       </div>

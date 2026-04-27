@@ -11,9 +11,9 @@ export default function VerifyPage() {
         </p>
         <p className="text-muted-foreground text-xs mt-4">
           Didn&apos;t get it? Check your spam folder or{' '}
-          <Link href="/auth/signup" className="text-primary hover:underline">try again</Link>.
+          <Link href="/signup" className="text-primary hover:underline">try again</Link>.
         </p>
-        <Link href="/auth/login" className="text-primary text-sm font-medium hover:underline block mt-6">
+        <Link href="/login" className="text-primary text-sm font-medium hover:underline block mt-6">
           Back to login
         </Link>
       </div>

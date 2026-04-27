@@ -13,7 +13,7 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = authPages.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   if (user && isAuthPage) {
@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     if (profile.status === 'suspended') {
-      return NextResponse.redirect(new URL('/auth/suspended', request.url))
+      return NextResponse.redirect(new URL('/suspended', request.url))
     }
   }
 
@@ -43,7 +43,7 @@ export async function proxy(request: NextRequest) {
       .single() as { data: { status: UserStatus } | null; error: unknown }
 
     if (profile?.status === 'suspended') {
-      return NextResponse.redirect(new URL('/auth/suspended', request.url))
+      return NextResponse.redirect(new URL('/suspended', request.url))
     }
   }
 

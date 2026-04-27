@@ -12,7 +12,7 @@ export default function SuspendedPage() {
           Your EOconnect account has been suspended. Please contact your chapter admin for more information.
         </p>
         <Link
-          href="/auth/login"
+          href="/login"
           className={cn(buttonVariants(), 'mt-6 bg-primary text-primary-foreground font-bold')}
         >
           Back to Login

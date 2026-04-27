@@ -14,7 +14,7 @@ export async function startConversation(formData: FormData) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const parsed = ConversationSchema.safeParse({
     owner_id: formData.get('owner_id'),

@@ -5,7 +5,7 @@ import { BusinessProfileWizard } from '@/components/forms/business-profile-wizar
 export default async function NewBusinessPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any

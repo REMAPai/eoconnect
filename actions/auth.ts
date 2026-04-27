@@ -36,12 +36,12 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName, eo_chapter: parsed.data.chapter },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/verify`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/verify`,
     },
   })
 
   if (error) return { error: error.message }
-  redirect('/auth/verify')
+  redirect('/verify')
 }
 
 export async function signIn(formData: FormData): Promise<AuthResult> {
@@ -67,7 +67,7 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
 export async function signOut(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect('/auth/login')
+  redirect('/login')
 }
 
 const ResetEmailSchema = z.object({
@@ -84,7 +84,7 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
 
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
   })
 
   if (error) return { error: error.message }
