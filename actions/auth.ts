@@ -70,12 +70,20 @@ export async function signOut(): Promise<void> {
   redirect('/auth/login')
 }
 
+const ResetEmailSchema = z.object({
+  email: z.string().email('Invalid email'),
+})
+
+const UpdatePasswordSchema = z.object({
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
+
 export async function requestPasswordReset(formData: FormData): Promise<AuthResult> {
-  const email = formData.get('email') as string
-  if (!email) return { error: 'Email is required' }
+  const parsed = ResetEmailSchema.safeParse({ email: formData.get('email') })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
   })
 
@@ -84,13 +92,11 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
 }
 
 export async function updatePassword(formData: FormData): Promise<AuthResult> {
-  const password = formData.get('password') as string
-  if (!password || password.length < 8) {
-    return { error: 'Password must be at least 8 characters' }
-  }
+  const parsed = UpdatePasswordSchema.safeParse({ password: formData.get('password') })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.updateUser({ password })
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
 
   if (error) return { error: error.message }
   redirect('/marketplace')

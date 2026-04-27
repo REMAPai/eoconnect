@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export default function SuspendedPage() {
   return (
@@ -10,10 +11,11 @@ export default function SuspendedPage() {
         <p className="text-muted-foreground text-sm leading-relaxed">
           Your EOconnect account has been suspended. Please contact your chapter admin for more information.
         </p>
-        <Link href="/auth/login">
-          <Button className="mt-6 bg-primary text-primary-foreground font-bold">
-            Back to Login
-          </Button>
+        <Link
+          href="/auth/login"
+          className={cn(buttonVariants(), 'mt-6 bg-primary text-primary-foreground font-bold')}
+        >
+          Back to Login
         </Link>
       </div>
     </div>
