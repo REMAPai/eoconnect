@@ -48,7 +48,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
         ) : (
           <div className="h-48 md:h-64 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5" />
         )}
-        <div className="absolute -bottom-6 left-6 h-16 w-16 rounded-xl border-2 border-border bg-card overflow-hidden">
+        <div className="absolute -bottom-8 left-6 h-24 w-24 rounded-xl border-2 border-border bg-card overflow-hidden shadow-md">
           {business.logo_url ? (
             <Image src={business.logo_url} alt="logo" fill className="object-cover" />
           ) : (
@@ -60,7 +60,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
       </div>
 
       {/* Business info + sidebar */}
-      <div className="pt-4 flex flex-col md:flex-row md:items-start gap-6">
+      <div className="pt-10 flex flex-col md:flex-row md:items-start gap-6">
         <div className="flex-1">
           <h1 className="text-3xl font-extrabold">{business.name}</h1>
           {business.tagline && <p className="text-muted-foreground mt-1">{business.tagline}</p>}

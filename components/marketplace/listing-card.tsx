@@ -39,11 +39,11 @@ export function ListingCard({ business }: ListingCardProps) {
         <div className="p-4">
           <div className="flex items-start gap-3 mb-3">
             {business.logo_url ? (
-              <div className="relative h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 border border-border">
+              <div className="relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0 border border-border">
                 <Image src={business.logo_url} alt={`${business.name} logo`} fill className="object-cover" />
               </div>
             ) : (
-              <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <span className="text-primary font-bold text-sm">{business.name.charAt(0)}</span>
               </div>
             )}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
+import Image from 'next/image'
 import { updateBusiness } from '@/actions/business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,10 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(business.logo_url ?? null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(business.cover_url ?? null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const socialLinks = (business.social_links ?? {}) as Record<string, string>
 
@@ -196,22 +201,88 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
       {/* Media */}
       <div className="bg-card border border-border rounded-xl p-6 space-y-4">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Media</h2>
-        <p className="text-xs text-muted-foreground">Upload a new file to replace the existing one. Leave empty to keep current.</p>
+        <p className="text-xs text-muted-foreground">Click to upload a new file. Leave empty to keep current.</p>
+
+        {/* Logo */}
         <div className="space-y-2">
           <Label>Logo</Label>
-          <label className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors">
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Upload new logo (PNG, JPG)</span>
-            <input name="logo" type="file" accept="image/*" className="hidden" />
-          </label>
+          <div className="flex items-center gap-4">
+            <div
+              className="relative h-20 w-20 rounded-xl border-2 border-border overflow-hidden flex-shrink-0 bg-muted cursor-pointer hover:border-primary transition-colors"
+              onClick={() => logoInputRef.current?.click()}
+            >
+              {logoPreview ? (
+                <Image src={logoPreview} alt="Logo preview" fill className="object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                className="text-sm text-primary hover:underline font-medium"
+              >
+                {logoPreview ? 'Change logo' : 'Upload logo'}
+              </button>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG up to 5MB</p>
+              {logoPreview && logoPreview !== business.logo_url && (
+                <p className="text-xs text-primary mt-0.5">New file selected ✓</p>
+              )}
+            </div>
+            <input
+              ref={logoInputRef}
+              name="logo"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0]
+                if (file) setLogoPreview(URL.createObjectURL(file))
+              }}
+            />
+          </div>
         </div>
+
+        {/* Cover */}
         <div className="space-y-2">
           <Label>Cover Image</Label>
-          <label className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors">
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Upload new cover (1200×400 recommended)</span>
-            <input name="cover" type="file" accept="image/*" className="hidden" />
-          </label>
+          <div
+            className="relative w-full h-36 rounded-xl border-2 border-dashed border-border overflow-hidden cursor-pointer hover:border-primary transition-colors bg-muted"
+            onClick={() => coverInputRef.current?.click()}
+          >
+            {coverPreview ? (
+              <>
+                <Image src={coverPreview} alt="Cover preview" fill className="object-cover" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 text-white text-sm font-medium">
+                    <Upload className="h-4 w-4" /> Change cover
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="h-full w-full flex flex-col items-center justify-center gap-2">
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Upload cover (1200×400 recommended)</span>
+              </div>
+            )}
+            {coverPreview && coverPreview !== business.cover_url && (
+              <span className="absolute bottom-2 right-2 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-medium">New file selected ✓</span>
+            )}
+          </div>
+          <input
+            ref={coverInputRef}
+            name="cover"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) setCoverPreview(URL.createObjectURL(file))
+            }}
+          />
         </div>
       </div>
 
