@@ -11,7 +11,10 @@ const BusinessSchema = z.object({
   tagline: z.string().optional(),
   description: z.string().optional(),
   website: z.string().url().optional().or(z.literal('')),
-  founded_year: z.coerce.number().min(1900).max(new Date().getFullYear()).optional(),
+  founded_year: z.preprocess(
+    v => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z.number().min(1900).max(new Date().getFullYear()).optional()
+  ),
   team_size: z.enum(['1-10', '11-50', '51-200', '201-500', '500+']).optional(),
   city: z.string().optional(),
   country: z.string().optional(),
