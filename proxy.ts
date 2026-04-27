@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareClient } from '@/lib/supabase/middleware-client'
+import type { UserRole, UserStatus } from '@/types/database'
 
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createMiddlewareClient(request)
@@ -23,7 +24,7 @@ export async function proxy(request: NextRequest) {
       .from('profiles')
       .select('role, status')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { role: UserRole; status: UserStatus } | null; error: unknown }
 
     if (!profile || !['chapter_admin', 'super_admin'].includes(profile.role)) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -38,7 +39,7 @@ export async function proxy(request: NextRequest) {
       .from('profiles')
       .select('status')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { status: UserStatus } | null; error: unknown }
 
     if (profile?.status === 'suspended') {
       return NextResponse.redirect(new URL('/auth/suspended', request.url))
