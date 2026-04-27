@@ -23,14 +23,14 @@ export function CustomerView({ conversations }: CustomerViewProps) {
         <div>
           <h3 className="text-lg font-semibold">No conversations yet</h3>
           <p className="text-muted-foreground text-sm mt-1">
-            Browse business services and start a conversation.
+            Browse EO member services and start a conversation.
           </p>
         </div>
         <Link
           href="/marketplace"
           className={cn(buttonVariants(), 'mt-2')}
         >
-          Start browsing business services
+          Start browsing EO member services
         </Link>
       </div>
     )

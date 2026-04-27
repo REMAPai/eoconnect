@@ -25,7 +25,7 @@ export default async function MarketplacePage() {
       {/* Hero */}
       <section className="text-center py-8">
         <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">
-          Exclusive to Members
+          Exclusive to EO Members
         </p>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
           Find trusted member<br />services for your business
@@ -74,7 +74,7 @@ export default async function MarketplacePage() {
       <section className="bg-card border border-border rounded-2xl p-8 text-center">
         <h3 className="text-xl font-bold mb-2">List Your Business</h3>
         <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
-          Reach the global network. Put your services in front of thousands of high-performing founders.
+          Reach the global EO network. Put your services in front of thousands of high-performing founders.
         </p>
         <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground mb-6">
           <span className="flex items-center gap-1.5"><span className="text-primary">✓</span> EO Member Verification</span>

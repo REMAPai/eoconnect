@@ -25,13 +25,13 @@ export default function LandingPage() {
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-4">
-            Exclusive to Members
+            Exclusive to EO Members
           </p>
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
             The B2B marketplace<br />built for founders
           </h1>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Discover, hire, and promote within your trusted network. No cold outreach — just deals with people already in the room.
+            Discover, hire, and promote within your trusted EO network. No cold outreach — just deals with people already in the room.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link href="/signup">
@@ -49,7 +49,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
-        © {new Date().getFullYear()} TABFT · Exclusive to Members
+        © {new Date().getFullYear()} TABFT · Exclusive to EO Members
       </footer>
     </div>
   )
