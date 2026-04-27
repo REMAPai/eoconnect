@@ -44,7 +44,7 @@ export function Navbar({ profile }: NavbarProps) {
                 href={link.href}
                 className={cn(
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  pathname.startsWith(link.href)
+                  (link.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(link.href))
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 )}
