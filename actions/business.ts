@@ -80,11 +80,27 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
       if (val) social_links[platform] = val
     }
 
+    // Handle custom categories: insert or find each, then merge IDs
+    const customCatsRaw = formData.get('custom_categories') as string | null
+    const customCatNames = customCatsRaw?.split(',').map(s => s.trim()).filter(Boolean) ?? []
+    const extraCategoryIds: string[] = []
+    for (const name of customCatNames) {
+      const { data: found } = await db.from('categories').select('id').ilike('name', name).single()
+      if (found?.id) {
+        extraCategoryIds.push(found.id)
+      } else {
+        const { data: created } = await db.from('categories').insert({ name, active: true }).select('id').single()
+        if (created?.id) extraCategoryIds.push(created.id)
+      }
+    }
+    const mergedCategoryIds = [...(parsed.data.category_ids ?? []), ...extraCategoryIds].slice(0, 3)
+
     const { data, error } = await db
       .from('businesses')
       .insert({
         owner_id: user.id,
         ...parsed.data,
+        category_ids: mergedCategoryIds,
         logo_url,
         cover_url,
         portfolio_urls,
@@ -151,13 +167,24 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
       cover_url = await uploadFile('eoconnect-media', `covers/${user.id}-${Date.now()}`, coverFile)
     }
 
+    const portfolioNewFiles = formData.getAll('portfolio') as File[]
+    const portfolioKeep = formData.getAll('portfolio_keep') as string[]
+    const newPortfolioUrls: string[] = []
+    for (const file of portfolioNewFiles.slice(0, 5)) {
+      if (file.size > 0) {
+        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}-${Date.now()}-${Math.random()}`, file)
+        newPortfolioUrls.push(url)
+      }
+    }
+    const portfolio_urls = [...portfolioKeep, ...newPortfolioUrls].slice(0, 5)
+
     const social_links: Record<string, string> = {}
     for (const platform of ['linkedin', 'twitter', 'instagram', 'facebook']) {
       const val = formData.get(`social_${platform}`) as string | null
       if (val) social_links[platform] = val
     }
 
-    const updateData: Record<string, unknown> = { ...parsed.data, social_links }
+    const updateData: Record<string, unknown> = { ...parsed.data, social_links, portfolio_urls }
     if (logo_url) updateData.logo_url = logo_url
     if (cover_url) updateData.cover_url = cover_url
 

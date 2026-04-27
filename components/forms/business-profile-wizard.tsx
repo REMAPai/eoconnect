@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
+import Image from 'next/image'
 import { createBusiness } from '@/actions/business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
-import { ChevronRight, ChevronLeft, Upload } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Upload, X } from 'lucide-react'
 import type { Category } from '@/types/database'
 
 const STEPS = ['Business Basics', 'Categories & Keywords', 'Contact Details', 'Media', 'Review & Publish']
@@ -24,6 +25,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
   const [step, setStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
   const [formData, setFormData] = useState({
     name: '', tagline: '', description: '', website: '',
     founded_year: '', team_size: '' as string,
@@ -31,9 +33,24 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
     category_ids: [] as string[], tags: '',
     phone: '', email: '',
     social_linkedin: '', social_twitter: '',
+    custom_categories: '',
   })
 
+  // File state
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [portfolioFiles, setPortfolioFiles] = useState<File[]>([])
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([])
+
+  // File input refs
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const portfolioInputRef = useRef<HTMLInputElement>(null)
+
   const update = (key: string, value: string) => setFormData(prev => ({ ...prev, [key]: value }))
+
   const toggleCategory = (id: string) => {
     setFormData(prev => ({
       ...prev,
@@ -43,11 +60,42 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
     }))
   }
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoFile(file)
+    setLogoPreview(URL.createObjectURL(file))
+  }
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCoverFile(file)
+    setCoverPreview(URL.createObjectURL(file))
+  }
+
+  const handlePortfolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - portfolioFiles.length)
+    if (!files.length) return
+    setPortfolioFiles(prev => [...prev, ...files].slice(0, 5))
+    setPortfolioPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))].slice(0, 5))
+    e.target.value = ''
+  }
+
+  const removePortfolioImage = (index: number) => {
+    setPortfolioFiles(prev => prev.filter((_, i) => i !== index))
+    setPortfolioPreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     const fd = new FormData(e.currentTarget)
     formData.category_ids.forEach(id => fd.append('category_ids', id))
+    if (logoFile) fd.set('logo', logoFile)
+    if (coverFile) fd.set('cover', coverFile)
+    portfolioFiles.forEach(f => fd.append('portfolio', f))
+    if (formData.custom_categories.trim()) fd.set('custom_categories', formData.custom_categories)
     startTransition(async () => {
       const result = await createBusiness(fd)
       if (result?.error) setError(result.error)
@@ -55,6 +103,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
   }
 
   const progress = ((step + 1) / STEPS.length) * 100
+  const totalCategories = formData.category_ids.length + formData.custom_categories.split(',').filter(s => s.trim()).length
 
   return (
     <div className="max-w-xl mx-auto">
@@ -75,20 +124,20 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
             <h2 className="text-xl font-bold">Tell us about your business</h2>
             <div className="space-y-2">
               <Label htmlFor="name">Business Name *</Label>
-              <Input id="name" name="name" value={formData.name} onChange={e => update('name', e.target.value)} placeholder="Acme Consulting Ltd." required />
+              <Input id="name" value={formData.name} onChange={e => update('name', e.target.value)} placeholder="Acme Consulting Ltd." required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="tagline">Tagline</Label>
-              <Input id="tagline" name="tagline" value={formData.tagline} onChange={e => update('tagline', e.target.value)} placeholder="One-line description of what you do" />
+              <Input id="tagline" value={formData.tagline} onChange={e => update('tagline', e.target.value)} placeholder="One-line description of what you do" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" value={formData.description} onChange={e => update('description', e.target.value)} placeholder="Describe your business, what makes you different…" rows={4} />
+              <Textarea id="description" value={formData.description} onChange={e => update('description', e.target.value)} placeholder="Describe your business, what makes you different…" rows={4} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="founded_year">Founded Year</Label>
-                <Input id="founded_year" name="founded_year" type="number" value={formData.founded_year} onChange={e => update('founded_year', e.target.value)} placeholder="2018" min="1900" max={new Date().getFullYear()} />
+                <Input id="founded_year" type="number" value={formData.founded_year} onChange={e => update('founded_year', e.target.value)} placeholder="2018" min="1900" max={new Date().getFullYear()} />
               </div>
               <div className="space-y-2">
                 <Label>Team Size</Label>
@@ -98,17 +147,16 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                     {TEAM_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <input type="hidden" name="team_size" value={formData.team_size} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" name="city" value={formData.city} onChange={e => update('city', e.target.value)} placeholder="London" />
+                <Input id="city" value={formData.city} onChange={e => update('city', e.target.value)} placeholder="London" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
-                <Input id="country" name="country" value={formData.country} onChange={e => update('country', e.target.value)} placeholder="United Kingdom" />
+                <Input id="country" value={formData.country} onChange={e => update('country', e.target.value)} placeholder="United Kingdom" />
               </div>
             </div>
           </div>
@@ -137,13 +185,26 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
               </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="custom_categories">Custom category (not in the list above)</Label>
+              <Input
+                id="custom_categories"
+                value={formData.custom_categories}
+                onChange={e => update('custom_categories', e.target.value)}
+                placeholder="e.g. Blockchain, Aerospace (comma-separated)"
+                disabled={totalCategories >= 3}
+              />
+              <p className="text-xs text-muted-foreground">
+                {totalCategories >= 3 ? 'Maximum 3 categories selected.' : `${3 - totalCategories} remaining slots`}
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="tags">Keywords / Tags</Label>
-              <Input id="tags" name="tags" value={formData.tags} onChange={e => update('tags', e.target.value)} placeholder="SaaS, fintech, B2B (comma-separated)" />
+              <Input id="tags" value={formData.tags} onChange={e => update('tags', e.target.value)} placeholder="SaaS, fintech, B2B (comma-separated)" />
               <p className="text-xs text-muted-foreground">Add up to 10 keywords to improve discoverability.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
-              <Input id="website" name="website" type="url" value={formData.website} onChange={e => update('website', e.target.value)} placeholder="https://yourcompany.com" />
+              <Input id="website" type="url" value={formData.website} onChange={e => update('website', e.target.value)} placeholder="https://yourcompany.com" />
             </div>
           </div>
         )}
@@ -154,50 +215,112 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
             <h2 className="text-xl font-bold">Contact Details</h2>
             <div className="space-y-2">
               <Label htmlFor="email">Business Email</Label>
-              <Input id="email" name="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="hello@yourcompany.com" />
+              <Input id="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="hello@yourcompany.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="+44 20 7946 0958" />
+              <Input id="phone" value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="+44 20 7946 0958" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="social_linkedin">LinkedIn</Label>
-              <Input id="social_linkedin" name="social_linkedin" value={formData.social_linkedin} onChange={e => update('social_linkedin', e.target.value)} placeholder="https://linkedin.com/company/yourco" />
+              <Input id="social_linkedin" value={formData.social_linkedin} onChange={e => update('social_linkedin', e.target.value)} placeholder="https://linkedin.com/company/yourco" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="social_twitter">X (Twitter)</Label>
-              <Input id="social_twitter" name="social_twitter" value={formData.social_twitter} onChange={e => update('social_twitter', e.target.value)} placeholder="https://x.com/yourco" />
+              <Input id="social_twitter" value={formData.social_twitter} onChange={e => update('social_twitter', e.target.value)} placeholder="https://x.com/yourco" />
             </div>
           </div>
         )}
 
         {/* Step 3: Media */}
         {step === 3 && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <h2 className="text-xl font-bold">Add Media</h2>
+
+            {/* Logo */}
             <div className="space-y-2">
               <Label>Logo</Label>
-              <label className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Upload logo (PNG, JPG, max 5MB)</span>
-                <input name="logo" type="file" accept="image/*" className="hidden" />
-              </label>
+              <div className="flex items-center gap-4">
+                <div
+                  className="relative h-20 w-20 rounded-xl border-2 border-border overflow-hidden flex-shrink-0 bg-muted cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  {logoPreview ? (
+                    <Image src={logoPreview} alt="Logo preview" fill className="object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <button type="button" onClick={() => logoInputRef.current?.click()} className="text-sm text-primary hover:underline font-medium">
+                    {logoPreview ? 'Change logo' : 'Upload logo'}
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG up to 5MB</p>
+                  {logoFile && <p className="text-xs text-primary mt-0.5">{logoFile.name} selected ✓</p>}
+                </div>
+              </div>
+              <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
             </div>
+
+            {/* Cover */}
             <div className="space-y-2">
               <Label>Cover Image</Label>
-              <label className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Upload cover image (1200×400 recommended)</span>
-                <input name="cover" type="file" accept="image/*" className="hidden" />
-              </label>
+              <div
+                className="relative w-full h-36 rounded-xl border-2 border-dashed border-border overflow-hidden cursor-pointer hover:border-primary transition-colors bg-muted"
+                onClick={() => coverInputRef.current?.click()}
+              >
+                {coverPreview ? (
+                  <>
+                    <Image src={coverPreview} alt="Cover preview" fill className="object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 text-white text-sm font-medium">
+                        <Upload className="h-4 w-4" /> Change cover
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-full w-full flex flex-col items-center justify-center gap-2">
+                    <Upload className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Upload cover (1200×400 recommended)</span>
+                  </div>
+                )}
+              </div>
+              <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
             </div>
+
+            {/* Portfolio */}
             <div className="space-y-2">
               <Label>Portfolio Images (up to 5)</Label>
-              <label className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Upload portfolio images</span>
-                <input name="portfolio" type="file" accept="image/*" multiple className="hidden" />
-              </label>
+              {portfolioPreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {portfolioPreviews.map((src, i) => (
+                    <div key={i} className="relative h-24 rounded-lg overflow-hidden border border-border group">
+                      <Image src={src} alt={`Portfolio ${i + 1}`} fill className="object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePortfolioImage(i)}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {portfolioFiles.length < 5 && (
+                <label
+                  className="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => portfolioInputRef.current?.click()}
+                >
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {portfolioFiles.length > 0 ? `Add more (${5 - portfolioFiles.length} remaining)` : 'Upload portfolio images'}
+                  </span>
+                </label>
+              )}
+              <input ref={portfolioInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePortfolioChange} />
             </div>
           </div>
         )}
@@ -210,12 +333,16 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
               <div className="bg-background border border-border rounded-xl p-4 space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Business</span><span className="font-medium">{formData.name}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Location</span><span>{[formData.city, formData.country].filter(Boolean).join(', ') || '—'}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Categories</span><span>{formData.category_ids.length} selected</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tags</span><span>{formData.tags ? formData.tags.split(',').length : 0} keywords</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Categories</span><span>{totalCategories} selected</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Keywords</span><span>{formData.tags ? formData.tags.split(',').filter(Boolean).length : 0}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Logo</span><span>{logoFile ? '✓ uploaded' : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Cover</span><span>{coverFile ? '✓ uploaded' : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Portfolio</span><span>{portfolioFiles.length > 0 ? `${portfolioFiles.length} image(s)` : '—'}</span></div>
               </div>
               <p className="text-sm text-muted-foreground">
                 Your listing will go live immediately. You can edit or pause it at any time from your dashboard.
               </p>
+              {/* Hidden fields for all string form data */}
               {Object.entries(formData).map(([key, val]) =>
                 key !== 'category_ids' && typeof val === 'string' ? (
                   <input key={key} type="hidden" name={key} value={val} />

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import Image from 'next/image'
-import { updateBusiness } from '@/actions/business'
+import { updateBusiness, type BusinessActionResult } from '@/actions/business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Upload } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import type { Business, Category } from '@/types/database'
 
 const TEAM_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'] as const
@@ -26,8 +26,12 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
   const [success, setSuccess] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(business.logo_url ?? null)
   const [coverPreview, setCoverPreview] = useState<string | null>(business.cover_url ?? null)
+  const [portfolioFiles, setPortfolioFiles] = useState<File[]>([])
+  const [portfolioNewPreviews, setPortfolioNewPreviews] = useState<string[]>([])
+  const [portfolioExisting, setPortfolioExisting] = useState<string[]>((business as { portfolio_urls?: string[] }).portfolio_urls ?? [])
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
+  const portfolioInputRef = useRef<HTMLInputElement>(null)
 
   const socialLinks = (business.social_links ?? {}) as Record<string, string>
 
@@ -62,15 +66,33 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
     }))
   }
 
+  const handlePortfolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - portfolioFiles.length - portfolioExisting.length)
+    if (!files.length) return
+    setPortfolioFiles(prev => [...prev, ...files].slice(0, 5 - portfolioExisting.length))
+    setPortfolioNewPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))].slice(0, 5 - portfolioExisting.length))
+    e.target.value = ''
+  }
+
+  const removeExistingPortfolio = (index: number) => {
+    setPortfolioExisting(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeNewPortfolio = (index: number) => {
+    setPortfolioFiles(prev => prev.filter((_, i) => i !== index))
+    setPortfolioNewPreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setSuccess(false)
     const fd = new FormData(e.currentTarget)
-    // Remove any category_ids from the native form and append from state
     formData.category_ids.forEach(id => fd.append('category_ids', id))
+    portfolioFiles.forEach(f => fd.append('portfolio', f))
+    portfolioExisting.forEach(url => fd.append('portfolio_keep', url))
     startTransition(async () => {
-      const result = await updateBusiness(business.id, fd)
+      const result: BusinessActionResult = await updateBusiness(business.id, fd)
       if (result?.error) {
         setError(result.error)
       } else {
@@ -282,6 +304,61 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
               const file = e.target.files?.[0]
               if (file) setCoverPreview(URL.createObjectURL(file))
             }}
+          />
+        </div>
+
+        {/* Portfolio */}
+        <div className="space-y-2">
+          <Label>Portfolio Images (up to 5)</Label>
+          {(portfolioExisting.length > 0 || portfolioNewPreviews.length > 0) && (
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {portfolioExisting.map((src, i) => (
+                <div key={`existing-${i}`} className="relative h-24 rounded-lg overflow-hidden border border-border group">
+                  <Image src={src} alt={`Portfolio ${i + 1}`} fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingPortfolio(i)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {portfolioNewPreviews.map((src, i) => (
+                <div key={`new-${i}`} className="relative h-24 rounded-lg overflow-hidden border border-primary/50 group">
+                  <Image src={src} alt={`New portfolio ${i + 1}`} fill className="object-cover" />
+                  <span className="absolute bottom-1 left-1 text-xs bg-primary text-primary-foreground px-1 rounded">New</span>
+                  <button
+                    type="button"
+                    onClick={() => removeNewPortfolio(i)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {(portfolioExisting.length + portfolioFiles.length) < 5 && (
+            <div
+              className="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors"
+              onClick={() => portfolioInputRef.current?.click()}
+            >
+              <Upload className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {portfolioExisting.length + portfolioFiles.length > 0
+                  ? `Add more (${5 - portfolioExisting.length - portfolioFiles.length} remaining)`
+                  : 'Upload portfolio images'}
+              </span>
+            </div>
+          )}
+          <input
+            ref={portfolioInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handlePortfolioChange}
           />
         </div>
       </div>
