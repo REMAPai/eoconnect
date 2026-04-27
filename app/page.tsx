@@ -11,10 +11,10 @@ export default function LandingPage() {
         </span>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link href="/auth/login">
+          <Link href="/login">
             <Button variant="outline" size="sm">Sign In</Button>
           </Link>
-          <Link href="/auth/signup">
+          <Link href="/signup">
             <Button className="bg-primary text-primary-foreground font-bold" size="sm">
               Join Now
             </Button>
@@ -34,12 +34,12 @@ export default function LandingPage() {
             Discover, hire, and promote within your trusted EO network. No cold outreach — just deals with people already in the room.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="/auth/signup">
+            <Link href="/signup">
               <Button size="lg" className="bg-primary text-primary-foreground font-bold px-8">
                 Request Access
               </Button>
             </Link>
-            <Link href="/auth/login">
+            <Link href="/login">
               <Button size="lg" variant="outline" className="px-8">
                 Sign In
               </Button>

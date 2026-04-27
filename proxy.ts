@@ -9,7 +9,8 @@ export async function proxy(request: NextRequest) {
 
   const protectedPaths = ['/dashboard', '/marketplace', '/admin']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
-  const isAuthPage = pathname.startsWith('/auth')
+  const authPages = ['/login', '/signup', '/reset-password', '/verify', '/suspended']
+  const isAuthPage = authPages.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
