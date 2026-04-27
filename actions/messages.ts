@@ -26,11 +26,12 @@ export async function startConversation(formData: FormData) {
 
   if (user.id === owner_id) redirect('/dashboard/messages')
 
-  // Check if conversation already exists between these two participants for this listing
+  // Check if this user already has a conversation about this listing
   const { data: existing } = await db
     .from('conversations')
     .select('id')
     .eq('listing_id', business_id)
+    .contains('participant_ids', [user.id])
     .maybeSingle()
 
   if (existing) {
