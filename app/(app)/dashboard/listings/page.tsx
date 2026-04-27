@@ -73,7 +73,7 @@ export default async function ListingsPage() {
         <div className="bg-card border border-border rounded-2xl p-8 text-center">
           <h2 className="text-lg font-semibold mb-2">No services yet</h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Add your first service to start getting discovered by other EO members.
+            Add your first service to start getting discovered by other members.
           </p>
           <Link
             href="/dashboard/listings/new"

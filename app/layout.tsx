@@ -9,8 +9,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'EOconnect — Members Marketplace',
-  description: 'The private B2B marketplace for EO members.',
+  title: "TABFT — There's A Business For That",
+  description: 'The B2B marketplace connecting businesses with the right people.',
 }
 
 export default function RootLayout({

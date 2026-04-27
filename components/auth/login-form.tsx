@@ -28,7 +28,7 @@ export function LoginForm() {
       <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
         <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
         <p className="text-muted-foreground text-sm mb-6">
-          Sign in to your EOconnect account
+          Sign in to your TABFT account
         </p>
 
         <GoogleButton label="Sign in with Google" />

@@ -26,9 +26,9 @@ export function SignupForm() {
   return (
     <div className="w-full max-w-md">
       <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-        <h1 className="text-2xl font-bold mb-2">Join EOconnect</h1>
+        <h1 className="text-2xl font-bold mb-2">Join TABFT</h1>
         <p className="text-muted-foreground text-sm mb-6">
-          Exclusive to verified EO members
+          Exclusive to verified members
         </p>
 
         <GoogleButton label="Sign up with Google" />
@@ -53,7 +53,7 @@ export function SignupForm() {
             <Input id="fullName" name="fullName" placeholder="Alex Thompson" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">EO Membership Email</Label>
+            <Label htmlFor="email">Membership Email</Label>
             <Input id="email" name="email" type="email" placeholder="you@company.com" required />
           </div>
           <div className="space-y-2">
@@ -70,7 +70,7 @@ export function SignupForm() {
         </form>
 
         <p className="text-xs text-muted-foreground text-center mt-4">
-          By registering you confirm you are an active EO member.
+          By registering you confirm you are an active member.
         </p>
         <p className="text-center text-sm text-muted-foreground mt-4">
           Already have an account?{' '}

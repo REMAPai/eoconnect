@@ -46,7 +46,7 @@ export default async function DashboardPage() {
         <CustomerView conversations={conversationsWithNames} />
         <div className="bg-card border border-border rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold mb-2">Set up your business profile</h2>
-          <p className="text-muted-foreground mb-6">Create your listing to appear in the EOconnect marketplace.</p>
+          <p className="text-muted-foreground mb-6">Create your listing to appear in the TABFT marketplace.</p>
           <Link
             href="/dashboard/business/new"
             className={cn(buttonVariants(), 'bg-primary text-primary-foreground font-bold')}

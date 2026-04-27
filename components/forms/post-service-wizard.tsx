@@ -185,7 +185,7 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Your service will be published immediately and visible to other EO members.
+                Your service will be published immediately and visible to other members.
               </p>
             </div>
             <div className="flex gap-3 mt-6">

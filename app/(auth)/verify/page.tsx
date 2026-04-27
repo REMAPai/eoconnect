@@ -7,7 +7,7 @@ export default function VerifyPage() {
         <div className="text-5xl mb-4">✉️</div>
         <h1 className="text-2xl font-bold mb-2">Verify your email</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          We sent a verification link to your email. Click it to activate your EOconnect account.
+          We sent a verification link to your email. Click it to activate your TABFT account.
         </p>
         <p className="text-muted-foreground text-xs mt-4">
           Didn&apos;t get it? Check your spam folder or{' '}

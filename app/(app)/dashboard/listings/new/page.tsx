@@ -22,7 +22,7 @@ export default async function NewListingPage() {
     <div>
       <h1 className="text-2xl font-bold text-center mb-2">Add a Service</h1>
       <p className="text-muted-foreground text-center mb-8">
-        List a service you offer to other EO members.
+        List a service you offer to other members.
       </p>
       <NewListingClient businessId={business.id} />
     </div>

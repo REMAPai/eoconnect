@@ -35,7 +35,7 @@ export function Navbar({ profile }: NavbarProps) {
       <div className="mx-auto max-w-[1280px] px-4 md:px-6 flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/marketplace" className="text-xl font-extrabold tracking-tight">
-            EO<span className="text-primary">connect</span>
+            TAB<span className="text-primary">FT</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
