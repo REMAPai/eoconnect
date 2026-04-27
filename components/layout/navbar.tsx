@@ -92,7 +92,7 @@ export function Navbar({ profile }: NavbarProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link href="/dashboard/billing" className="flex items-center w-full">
+                <Link href="/dashboard/business/edit" className="flex items-center w-full">
                   <Settings className="mr-2 h-4 w-4" />Settings
                 </Link>
               </DropdownMenuItem>
