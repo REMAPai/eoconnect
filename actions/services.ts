@@ -14,18 +14,14 @@ const ServiceSchema = z.object({
 
 export type ServiceActionResult = { error: string | null; id?: string }
 
-// The Database type uses Partial<T> for Insert/Update which causes
-// Supabase's TS generics to resolve mutation payloads as `never`.
-// We cast the client to a looser type for mutation calls only.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyClient = any
-
 export async function createService(business_id: string, formData: FormData): Promise<ServiceActionResult> {
-  const supabase: AnyClient = await createClient()
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: business } = await supabase
+  const { data: business } = await db
     .from('businesses')
     .select('id')
     .eq('id', business_id)
@@ -44,7 +40,7 @@ export async function createService(business_id: string, formData: FormData): Pr
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('services')
     .insert({ ...parsed.data, business_id, status: 'published' })
     .select('id')
@@ -55,12 +51,13 @@ export async function createService(business_id: string, formData: FormData): Pr
 }
 
 export async function updateService(id: string, formData: FormData): Promise<ServiceActionResult> {
-  const supabase: AnyClient = await createClient()
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // verify ownership via join
-  const { data: service } = await supabase
+  const { data: service } = await db
     .from('services')
     .select('id, business_id, businesses!inner(owner_id)')
     .eq('id', id)
@@ -80,7 +77,7 @@ export async function updateService(id: string, formData: FormData): Promise<Ser
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { error } = await supabase.from('services').update(parsed.data).eq('id', id)
+  const { error } = await db.from('services').update(parsed.data).eq('id', id)
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/listings')
@@ -88,12 +85,13 @@ export async function updateService(id: string, formData: FormData): Promise<Ser
 }
 
 export async function deleteService(id: string): Promise<ServiceActionResult> {
-  const supabase: AnyClient = await createClient()
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // fetch service and verify ownership via join before deleting
-  const { data: service } = await supabase
+  const { data: service } = await db
     .from('services')
     .select('id, businesses!inner(owner_id)')
     .eq('id', id)
@@ -103,7 +101,7 @@ export async function deleteService(id: string): Promise<ServiceActionResult> {
     return { error: 'Not authorized' }
   }
 
-  const { error } = await supabase.from('services').delete().eq('id', id)
+  const { error } = await db.from('services').delete().eq('id', id)
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/listings')

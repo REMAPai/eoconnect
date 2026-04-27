@@ -23,14 +23,10 @@ const BusinessSchema = z.object({
 
 export type BusinessActionResult = { error: string | null; id?: string }
 
-// The Database type uses Partial<T> for Insert/Update which causes
-// Supabase's TS generics to resolve mutation payloads as `never`.
-// We cast the client to a looser type for mutation calls only.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyClient = any
-
 export async function createBusiness(formData: FormData): Promise<BusinessActionResult> {
-  const supabase: AnyClient = await createClient()
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -81,7 +77,7 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
       if (val) social_links[platform] = val
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('businesses')
       .insert({
         owner_id: user.id,
@@ -106,11 +102,13 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
 }
 
 export async function updateBusiness(id: string, formData: FormData): Promise<BusinessActionResult> {
-  const supabase: AnyClient = await createClient()
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('businesses')
     .select('id, owner_id')
     .eq('id', id)
@@ -160,7 +158,7 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
     if (logo_url) updateData.logo_url = logo_url
     if (cover_url) updateData.cover_url = cover_url
 
-    const { error } = await supabase.from('businesses').update(updateData).eq('id', id)
+    const { error } = await db.from('businesses').update(updateData).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/marketplace')
@@ -176,11 +174,13 @@ export async function updateBusinessStatus(
   id: string,
   status: 'draft' | 'published' | 'paused'
 ): Promise<BusinessActionResult> {
-  const supabase: AnyClient = await createClient()
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('businesses')
     .update({ status })
     .eq('id', id)
