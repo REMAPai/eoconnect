@@ -7,6 +7,8 @@ import { Eye, Search, MessageCircle, LayoutList, Inbox, Megaphone } from 'lucide
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { AnalyticsChart } from '@/components/dashboard/analytics-chart'
 import { LeadProgress } from '@/components/dashboard/lead-progress'
+import { DashboardViewToggle } from '@/components/dashboard/dashboard-view-toggle'
+import { CustomerView } from '@/components/dashboard/customer-view'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -21,17 +23,37 @@ export default async function DashboardPage() {
     .eq('owner_id', user.id)
     .maybeSingle() as { data: { id: string; name: string; status: string } | null }
 
+  // Fetch conversations where user is a participant
+  const { data: conversations } = await db
+    .from('conversations')
+    .select('id, listing_id, last_message_at')
+    .contains('participant_ids', [user.id])
+    .order('last_message_at', { ascending: false })
+    .limit(10) as { data: Array<{ id: string; listing_id: string | null; last_message_at: string }> | null }
+
+  const conversationsWithNames = await Promise.all(
+    (conversations ?? []).map(async (conv) => {
+      if (!conv.listing_id) return { ...conv, businessName: undefined }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: biz } = await (db as any).from('businesses').select('name').eq('id', conv.listing_id).maybeSingle() as { data: { name: string } | null }
+      return { ...conv, businessName: biz?.name }
+    })
+  )
+
   if (!business) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <h2 className="text-2xl font-bold mb-2">Set up your business profile</h2>
-        <p className="text-muted-foreground mb-6">Create your listing to appear in the EOconnect marketplace.</p>
-        <Link
-          href="/dashboard/business/new"
-          className={cn(buttonVariants(), 'bg-primary text-primary-foreground font-bold')}
-        >
-          Create Profile
-        </Link>
+      <div className="space-y-6">
+        <CustomerView conversations={conversationsWithNames} />
+        <div className="bg-card border border-border rounded-2xl p-8 text-center">
+          <h2 className="text-2xl font-bold mb-2">Set up your business profile</h2>
+          <p className="text-muted-foreground mb-6">Create your listing to appear in the EOconnect marketplace.</p>
+          <Link
+            href="/dashboard/business/new"
+            className={cn(buttonVariants(), 'bg-primary text-primary-foreground font-bold')}
+          >
+            Create Profile
+          </Link>
+        </div>
       </div>
     )
   }
@@ -56,7 +78,7 @@ export default async function DashboardPage() {
     contact_clicks: r.contact_clicks ?? 0,
   }))
 
-  return (
+  const providerView = (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -99,5 +121,12 @@ export default async function DashboardPage() {
         </Link>
       </div>
     </div>
+  )
+
+  return (
+    <DashboardViewToggle
+      providerContent={providerView}
+      customerContent={<CustomerView conversations={conversationsWithNames} />}
+    />
   )
 }
