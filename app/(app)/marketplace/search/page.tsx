@@ -33,8 +33,9 @@ async function SearchResults({ searchParams }: SearchPageProps) {
     query = query.textSearch('search_vector', params.q, { type: 'websearch', config: 'english' })
   }
 
-  if (params.country) {
-    query = query.ilike('country', `%${params.country}%`)
+  const ALLOWED_REGIONS = ['North America', 'Europe', 'Asia Pacific', 'Middle East', 'Africa', 'Latin America']
+  if (params.country && ALLOWED_REGIONS.includes(params.country)) {
+    query = query.eq('country', params.country)
   }
 
   const categorySlugs = Array.isArray(params.category)
@@ -53,7 +54,8 @@ async function SearchResults({ searchParams }: SearchPageProps) {
   const sort = params.sort ?? 'relevance'
   if (sort === 'newest') query = query.order('created_at', { ascending: false })
   else if (sort === 'alpha') query = query.order('name')
-  else query = query.order('created_at', { ascending: false })
+  else if (!params.q) query = query.order('created_at', { ascending: false })
+  // when q is present and sort=relevance, let Postgres order by ts_rank
 
   const { data: results } = await query.limit(50)
 
