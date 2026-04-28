@@ -1,8 +1,28 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { createClient } from '@/lib/supabase/server'
 
-export default function LandingPage() {
+interface LandingPageProps {
+  searchParams: Promise<{ code?: string; next?: string }>
+}
+
+export default async function LandingPage({ searchParams }: LandingPageProps) {
+  const { code, next } = await searchParams
+
+  // Defensive: if Supabase redirected the OAuth code here instead of /auth/callback
+  // (because the allowlist isn't configured), forward it.
+  if (code) {
+    const target = next ? `/auth/callback?code=${code}&next=${encodeURIComponent(next)}` : `/auth/callback?code=${code}`
+    redirect(target)
+  }
+
+  // Already signed in? Skip the marketing page.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) redirect('/marketplace')
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-between px-6 py-5 border-b border-border">
