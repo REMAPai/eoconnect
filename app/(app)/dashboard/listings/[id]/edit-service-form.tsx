@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { updateService } from '@/actions/services'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ interface EditServiceFormProps {
 }
 
 export function EditServiceForm({ service }: EditServiceFormProps) {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -64,6 +66,9 @@ export function EditServiceForm({ service }: EditServiceFormProps) {
         setError(result.error)
       } else {
         setSuccess(true)
+        // MM-08: jump back to the listings overview after a brief success flash
+        router.push('/dashboard/listings')
+        router.refresh()
       }
     })
   }

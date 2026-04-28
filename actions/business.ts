@@ -11,7 +11,15 @@ const BusinessSchema = z.object({
   name: z.string().min(2, 'Business name required'),
   tagline: z.string().optional(),
   description: z.string().optional(),
-  website: z.string().url().optional().or(z.literal('')),
+  // Accept plain domains like "remap.ai" — auto-prepend https:// if missing.
+  // Empty string passes through; a non-empty value must be a valid URL after normalization.
+  website: z.preprocess((val) => {
+    if (typeof val !== 'string') return val
+    const trimmed = val.trim()
+    if (!trimmed) return ''
+    if (/^https?:\/\//i.test(trimmed)) return trimmed
+    return `https://${trimmed}`
+  }, z.string().url().optional().or(z.literal(''))),
   founded_year: z.preprocess(
     v => (v === '' || v === null || v === undefined ? undefined : Number(v)),
     z.number().min(1900).max(new Date().getFullYear()).optional()

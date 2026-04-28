@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Eye, Search, MessageCircle, LayoutList, Inbox, Megaphone } from 'lucide-react'
+import { Eye, Search, MessageCircle, LayoutList, Inbox, Megaphone, UserCog, Building2, Layers, Plus } from 'lucide-react'
 import { ADS_ENABLED } from '@/lib/feature-flags'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { AnalyticsChart } from '@/components/dashboard/analytics-chart'
@@ -82,12 +82,40 @@ export default async function DashboardPage() {
   const providerView = (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">{business.name}</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Provider Dashboard</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Business Dashboard</p>
         </div>
         <Badge variant="secondary" className="capitalize ml-auto">{business.status}</Badge>
+      </div>
+
+      {/* Primary actions — always visible (MM-11, MM-12) */}
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/dashboard/account"
+          className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+        >
+          <UserCog className="h-4 w-4" /> Edit Profile
+        </Link>
+        <Link
+          href={`/dashboard/business/edit/${business.id}`}
+          className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+        >
+          <Building2 className="h-4 w-4" /> Edit This Business
+        </Link>
+        <Link
+          href="/dashboard/business/edit"
+          className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+        >
+          <Layers className="h-4 w-4" /> All My Businesses
+        </Link>
+        <Link
+          href="/dashboard/business/new"
+          className={cn(buttonVariants({ size: 'sm' }), 'bg-primary text-primary-foreground font-bold gap-1.5')}
+        >
+          <Plus className="h-4 w-4" /> Add Another Business
+        </Link>
       </div>
 
       {/* Stats row */}

@@ -24,7 +24,7 @@ interface NavbarProps {
 
 const baseLinks = [
   { href: '/marketplace', label: 'Marketplace' },
-  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/dashboard', label: 'Business Dashboard' },
   { href: '/dashboard/messages', label: 'Messages' },
 ] as const
 
