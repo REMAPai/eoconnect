@@ -1,5 +1,4 @@
 insert into public.categories (name, slug, icon, sort_order) values
-  ('Professional Services',    'professional-services',    '⚖️',  1),
   ('Technology & Software',    'technology-software',      '💻',  2),
   ('Marketing & Creative',     'marketing-creative',       '🎨',  3),
   ('Financial Services',       'financial-services',       '💰',  4),

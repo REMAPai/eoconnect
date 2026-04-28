@@ -29,7 +29,6 @@ const CATEGORY_TAGLINES: Record<string, string> = {
   'cybersecurity':                  'Threat detection, audits, and compliance.',
   'saas-software-products':         'Vetted SaaS tooling for scaling teams.',
   'legal-services':                 'Complex structure, M&A, and cross-border protection for scaling entities.',
-  'professional-services':          'Trusted advisors across legal, accounting, and operations.',
   'consulting-advisory':            'Strategy and operational transformation.',
   'financial-services':             'Capital, treasury, and financial structuring.',
   'investment-venture':             'Growth capital, VC, and strategic investors.',
@@ -57,10 +56,8 @@ const HERO_PRIORITY = [
   'consulting-advisory',
 ]
 
-// Avoids running two near-duplicate categories on the front page (e.g. legal vs professional).
 const MEDIUM_PRIORITY = [
   'legal-services',
-  'professional-services',
   'consulting-advisory',
   'financial-services',
 ]
