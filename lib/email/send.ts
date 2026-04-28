@@ -35,8 +35,11 @@ const wrap = (title: string, body: string) => `
 <html><head><meta charset="utf-8"><title>${title}</title></head>
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9f6f0;">
   <div style="max-width:560px;margin:40px auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-    <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;">
-      Member<span style="color:#2d5a3d;">Market</span>
+    <div style="margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+      <span style="display:inline-block;background:#2d5a3d;color:#f9f6f0;font-weight:800;padding:6px 9px;border-radius:6px;letter-spacing:-0.5px;font-size:14px;line-height:1;">MM</span>
+      <span style="font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1;">
+        <span style="color:#1a1a1a;">member</span><span style="color:#c17d2a;">.market</span>
+      </span>
     </div>
     ${body}
     <p style="font-size:12px;color:#999;margin-top:32px;border-top:1px solid #eee;padding-top:16px;">

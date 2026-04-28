@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { Logo } from '@/components/layout/logo'
 import { createClient } from '@/lib/supabase/server'
 
 interface LandingPageProps {
@@ -26,9 +27,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-between px-6 py-5 border-b border-border">
-        <span className="text-2xl font-extrabold tracking-tight">
-          Member<span className="text-primary">Market</span>
-        </span>
+        <Logo height={32} />
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Link href="/login">

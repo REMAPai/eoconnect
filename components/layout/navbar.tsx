@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useTransition } from 'react'
 import { Settings, User } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
+import { Logo } from './logo'
 import { MessageIndicator, NotificationBell } from './notification-indicator'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -39,8 +40,9 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className="mx-auto max-w-[1280px] px-4 md:px-6 flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/marketplace" className="text-xl font-extrabold tracking-tight">
-            Member<span className="text-primary">Market</span>
+          <Link href="/marketplace" aria-label="Member Market home">
+            <Logo height={28} className="hidden sm:block" />
+            <Logo variant="mark" height={32} className="sm:hidden" />
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
