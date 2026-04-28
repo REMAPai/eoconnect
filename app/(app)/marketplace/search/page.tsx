@@ -3,12 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/marketplace/search-bar'
 import { FilterPanel } from '@/components/marketplace/filter-panel'
 import { ListingCard } from '@/components/marketplace/listing-card'
+import { parseSearchQuery } from '@/lib/ai/parse-search'
+import { Sparkles } from 'lucide-react'
 
 type SearchParams = {
   q?: string
   category?: string | string[]
   country?: string
+  city?: string
   sort?: string
+  smart?: string
 }
 
 interface SearchPageProps {
@@ -24,27 +28,40 @@ async function SearchResults({ searchParams }: SearchPageProps) {
   const { data: categories } = await db
     .from('categories').select('*').eq('active', true).order('sort_order')
 
+  const useSmart = params.smart === '1' && params.q && categories
+  const parsed = useSmart
+    ? await parseSearchQuery(params.q!, categories)
+    : null
+
   let query = db
     .from('businesses')
     .select('*')
     .eq('status', 'published')
 
-  if (params.q) {
-    query = query.textSearch('search_vector', params.q, { type: 'websearch', config: 'english' })
+  const ftsTerm = parsed?.keywords?.trim() || params.q?.trim()
+  if (ftsTerm) {
+    query = query.textSearch('search_vector', ftsTerm, { type: 'websearch', config: 'english' })
+  }
+
+  const cityFilter = parsed?.city ?? params.city
+  if (cityFilter) {
+    query = query.ilike('city', `%${cityFilter}%`)
   }
 
   const ALLOWED_REGIONS = ['North America', 'Europe', 'Asia Pacific', 'Middle East', 'Africa', 'Latin America']
-  if (params.country && ALLOWED_REGIONS.includes(params.country)) {
-    query = query.eq('country', params.country)
+  const countryFilter = parsed?.country ?? params.country
+  if (countryFilter && (ALLOWED_REGIONS.includes(countryFilter) || parsed?.country)) {
+    query = query.ilike('country', `%${countryFilter}%`)
   }
 
-  const categorySlugs = Array.isArray(params.category)
+  const urlSlugs = Array.isArray(params.category)
     ? params.category
     : params.category ? [params.category] : []
+  const allSlugs = [...new Set([...urlSlugs, ...(parsed?.categorySlugs ?? [])])]
 
-  if (categorySlugs.length > 0 && categories) {
+  if (allSlugs.length > 0 && categories) {
     const catIds = categories
-      .filter((c: { slug: string; id: string }) => categorySlugs.includes(c.slug))
+      .filter((c: { slug: string; id: string }) => allSlugs.includes(c.slug))
       .map((c: { id: string }) => c.id)
     if (catIds.length > 0) {
       query = query.overlaps('category_ids', catIds)
@@ -54,8 +71,7 @@ async function SearchResults({ searchParams }: SearchPageProps) {
   const sort = params.sort ?? 'relevance'
   if (sort === 'newest') query = query.order('created_at', { ascending: false })
   else if (sort === 'alpha') query = query.order('name')
-  else if (!params.q) query = query.order('created_at', { ascending: false })
-  // when q is present and sort=relevance, let Postgres order by ts_rank
+  else if (!ftsTerm) query = query.order('created_at', { ascending: false })
 
   const { data: results } = await query.limit(50)
 
@@ -70,6 +86,20 @@ async function SearchResults({ searchParams }: SearchPageProps) {
       </aside>
 
       <div className="flex-1 min-w-0">
+        {parsed && (parsed.categorySlugs.length > 0 || parsed.city || parsed.country) && (
+          <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20 flex items-start gap-2">
+            <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <span className="font-medium">AI understood:</span>{' '}
+              {parsed.categorySlugs.length > 0 && (
+                <span>{parsed.categorySlugs.join(', ')}</span>
+              )}
+              {parsed.city && <span> · in <span className="capitalize">{parsed.city}</span></span>}
+              {parsed.country && <span> · {parsed.country}</span>}
+              {parsed.keywords && <span> · &ldquo;{parsed.keywords}&rdquo;</span>}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-semibold text-foreground">{results?.length ?? 0}</span> results
