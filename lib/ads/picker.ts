@@ -1,6 +1,7 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import { generateText, Output } from 'ai'
+import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
 
 /**
@@ -208,9 +209,8 @@ async function computeSemanticScores(
   ctx: PickerContext,
   campaigns: CampaignRow[]
 ): Promise<Record<string, number>> {
-  // Fast path 1: no AI gateway → fall back to keyword overlap
-  const hasAuth = !!process.env.AI_GATEWAY_API_KEY || !!process.env.VERCEL_OIDC_TOKEN
-  if (!hasAuth) return keywordOverlapScores(ctx, campaigns)
+  // Fast path 1: no OpenAI key → fall back to keyword overlap
+  if (!process.env.OPENAI_API_KEY) return keywordOverlapScores(ctx, campaigns)
 
   // Fast path 2: no query and no category context → all neutral
   if (!ctx.query && !ctx.categoryIds?.length) {
@@ -232,7 +232,7 @@ async function computeSemanticScores(
     ).join('\n')
 
     const { output } = await generateText({
-      model: 'openai/gpt-5.4-mini',
+      model: openai('gpt-5.4-mini'),
       output: Output.object({ schema: SemanticScoreSchema }),
       prompt: `You are scoring how well advertisers' campaigns match a user's current search.
 
