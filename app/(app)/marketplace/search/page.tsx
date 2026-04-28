@@ -4,6 +4,7 @@ import { SearchBar } from '@/components/marketplace/search-bar'
 import { FilterPanel } from '@/components/marketplace/filter-panel'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { parseSearchQuery } from '@/lib/ai/parse-search'
+import { rerankResults, type RerankCandidate } from '@/lib/ai/rerank-results'
 import { pickAds } from '@/lib/ads/picker'
 import { SponsoredCard } from '@/components/marketplace/sponsored-card'
 import type { Business } from '@/types/database'
@@ -36,85 +37,137 @@ async function SearchResults({ searchParams }: SearchPageProps) {
     : null
 
   const ftsTerm = parsed?.keywords?.trim() || params.q?.trim()
-  const cityFilter = parsed?.city ?? params.city
   const ALLOWED_REGIONS = ['North America', 'Europe', 'Asia Pacific', 'Middle East', 'Africa', 'Latin America']
-  const countryFilter = parsed?.country ?? params.country
+
+  // ── HARD filters (user-explicit, from filter sidebar / URL) ──
+  const cityHard = params.city
+  const countryHard = (params.country && ALLOWED_REGIONS.includes(params.country)) ? params.country : null
   const urlSlugs = Array.isArray(params.category)
     ? params.category
     : params.category ? [params.category] : []
-  const allSlugs = [...new Set([...urlSlugs, ...(parsed?.categorySlugs ?? [])])]
-  const catIds = (allSlugs.length > 0 && categories)
-    ? categories.filter((c: { slug: string; id: string }) => allSlugs.includes(c.slug)).map((c: { id: string }) => c.id)
+  const hardCatIds: string[] = (urlSlugs.length > 0 && categories)
+    ? categories.filter((c: { slug: string; id: string }) => urlSlugs.includes(c.slug)).map((c: { id: string }) => c.id)
     : []
 
-  const buildBaseQuery = () => {
+  // ── SOFT hints (AI-extracted from natural language) ──
+  // Used to broaden the candidate pool (UNION), NOT as filters that exclude.
+  // The LLM re-ranker handles relevance using location/category context naturally.
+  const aiCatIds: string[] = (parsed?.categorySlugs.length && categories)
+    ? categories.filter((c: { slug: string; id: string }) => parsed.categorySlugs.includes(c.slug)).map((c: { id: string }) => c.id)
+    : []
+
+  // Base query enforces ONLY hard URL-explicit filters.
+  const buildBase = () => {
     let q = db.from('businesses').select('*').eq('status', 'published')
-    if (cityFilter) q = q.ilike('city', `%${cityFilter}%`)
-    if (countryFilter && (ALLOWED_REGIONS.includes(countryFilter) || parsed?.country)) {
-      q = q.ilike('country', `%${countryFilter}%`)
-    }
-    if (catIds.length > 0) q = q.overlaps('category_ids', catIds)
+    if (cityHard) q = q.ilike('city', `%${cityHard}%`)
+    if (countryHard) q = q.ilike('country', `%${countryHard}%`)
+    if (hardCatIds.length > 0) q = q.overlaps('category_ids', hardCatIds)
     return q
   }
 
-  // Two-pronged search:
-  //  1. Full-text search on businesses (name/tagline/description/tags)
-  //  2. ILIKE on services (title/description) → fetch parent businesses
-  // Then merge, dedupe, and respect filters.
-  const searches: Promise<{ data: Business[] | null }>[] = []
+  // ── Gather candidates from multiple sources, then merge ──
+  const candidatePromises: Promise<{ data: Business[] | null }>[] = []
 
-  let primaryQuery = buildBaseQuery()
+  // 1. Full-text search on businesses (name/tagline/description/tags)
   if (ftsTerm) {
-    primaryQuery = primaryQuery.textSearch('search_vector', ftsTerm, { type: 'websearch', config: 'english' })
+    candidatePromises.push(
+      buildBase().textSearch('search_vector', ftsTerm, { type: 'websearch', config: 'english' }).limit(30) as Promise<{ data: Business[] | null }>
+    )
   }
-  searches.push(primaryQuery.limit(50) as Promise<{ data: Business[] | null }>)
 
+  // 2. Services keyword match → parent businesses
   if (ftsTerm) {
-    // Find services matching the query, then businesses that own them.
     const escaped = ftsTerm.replace(/[%_]/g, m => '\\' + m)
-    searches.push(
+    candidatePromises.push(
       (db.from('services')
         .select('business_id')
         .eq('status', 'published')
         .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
-        .limit(50) as Promise<{ data: Array<{ business_id: string }> | null }>)
+        .limit(30) as Promise<{ data: Array<{ business_id: string }> | null }>)
         .then(async ({ data: svcRows }) => {
           if (!svcRows || svcRows.length === 0) return { data: [] as Business[] }
           const ids = [...new Set(svcRows.map(r => r.business_id))]
-          return await buildBaseQuery().in('id', ids).limit(50) as { data: Business[] | null }
+          return await buildBase().in('id', ids).limit(30) as { data: Business[] | null }
         })
     )
   }
 
-  const settled = await Promise.all(searches)
+  // 3. AI-suggested categories — broadens beyond keyword overlap
+  if (aiCatIds.length > 0) {
+    candidatePromises.push(
+      buildBase().overlaps('category_ids', aiCatIds).limit(30) as Promise<{ data: Business[] | null }>
+    )
+  }
+
+  // 4. No query at all → list mode
+  if (!ftsTerm && aiCatIds.length === 0) {
+    candidatePromises.push(
+      buildBase().order('created_at', { ascending: false }).limit(50) as Promise<{ data: Business[] | null }>
+    )
+  }
+
+  const settled = await Promise.all(candidatePromises)
   const seen = new Set<string>()
-  const results: Business[] = []
+  const candidates: Business[] = []
   for (const r of settled) {
     for (const row of (r.data ?? [])) {
-      if (!seen.has(row.id)) {
-        seen.add(row.id)
-        results.push(row)
+      if (!seen.has(row.id)) { seen.add(row.id); candidates.push(row) }
+    }
+  }
+  // Cap candidate set so LLM cost stays bounded.
+  const topCandidates = candidates.slice(0, 30)
+
+  // ── Fetch services for candidates so the LLM has full context ──
+  const servicesByBusiness = new Map<string, string[]>()
+  if (topCandidates.length > 0 && useSmart && params.q) {
+    const { data: svcs } = await db
+      .from('services')
+      .select('business_id, title, description')
+      .in('business_id', topCandidates.map(c => c.id))
+      .eq('status', 'published') as { data: Array<{ business_id: string; title: string; description: string | null }> | null }
+    for (const s of svcs ?? []) {
+      const list = servicesByBusiness.get(s.business_id) ?? []
+      if (list.length < 5) {
+        list.push(s.description ? `${s.title}: ${s.description.slice(0, 100)}` : s.title)
+        servicesByBusiness.set(s.business_id, list)
       }
     }
   }
 
-  const sort = params.sort ?? 'relevance'
-  if (sort === 'alpha') {
-    results.sort((a, b) => a.name.localeCompare(b.name))
-  } else if (sort === 'newest' || !ftsTerm) {
-    results.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+  // ── Semantic re-rank with the LLM (only when smart=1 and we have a query) ──
+  let results: Business[] = topCandidates
+  if (useSmart && params.q && topCandidates.length > 0) {
+    const rerankInput: RerankCandidate[] = topCandidates.map(c => ({
+      id: c.id,
+      name: c.name,
+      tagline: c.tagline,
+      description: c.description,
+      city: c.city,
+      country: c.country,
+      services: servicesByBusiness.get(c.id) ?? [],
+    }))
+    const scores = await rerankResults(params.q, rerankInput)
+    const RELEVANCE_FLOOR = 0.2
+    results = topCandidates
+      .map(c => ({ business: c, score: scores.get(c.id) ?? 0 }))
+      .filter(r => r.score >= RELEVANCE_FLOOR)
+      .sort((a, b) => b.score - a.score)
+      .map(r => r.business)
+  } else {
+    // No smart re-rank — keep original order, with sort overrides
+    const sort = params.sort ?? 'relevance'
+    if (sort === 'alpha') {
+      results.sort((a, b) => a.name.localeCompare(b.name))
+    } else if (sort === 'newest' || !ftsTerm) {
+      results.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+    }
   }
-  // (relevance order is preserved from the per-source FTS scoring naturally)
 
-  // Pick sponsored ads to inject. Excludes the businesses that already appear organically.
-  const organicBusinessIds = (results ?? []).map((b: Business) => b.id)
+  // ── Sponsored ad injection (excludes organic results) ──
+  const organicBusinessIds = results.map((b: Business) => b.id)
   const ads = await pickAds({
     query: params.q,
-    categoryIds: parsed?.categorySlugs?.length
-      ? categories?.filter((c: { slug: string; id: string }) => parsed.categorySlugs.includes(c.slug)).map((c: { id: string }) => c.id) ?? []
-      : (allSlugs.length > 0
-        ? categories?.filter((c: { slug: string; id: string }) => allSlugs.includes(c.slug)).map((c: { id: string }) => c.id) ?? []
-        : []),
+    categoryIds: aiCatIds.length > 0 ? aiCatIds : hardCatIds,
     city: parsed?.city ?? params.city ?? null,
     country: parsed?.country ?? params.country ?? null,
     page: 'search',
@@ -122,7 +175,6 @@ async function SearchResults({ searchParams }: SearchPageProps) {
     excludeBusinessIds: organicBusinessIds,
   })
 
-  // Fetch full business rows for sponsored ads
   let sponsoredBusinesses: Array<{ business: Business; campaignId: string }> = []
   if (ads.length > 0) {
     const { data: bizRows } = await db.from('businesses').select('*').in('id', ads.map(a => a.business_id)) as { data: Business[] | null }
@@ -153,7 +205,6 @@ async function SearchResults({ searchParams }: SearchPageProps) {
         </div>
         {results && results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {/* Sponsored injection: first ad at position 0, second ad at position 4 */}
             {(() => {
               const cards: React.ReactNode[] = []
               const organic = results as Business[]
