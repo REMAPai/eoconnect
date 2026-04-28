@@ -278,10 +278,16 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
         <section>
           <h2 className="text-xl font-bold mb-4">Services</h2>
           <div className="grid gap-4">
-            {services.map((service: { id: string; title: string; description?: string; pricing_model: string; price_from?: number; price_to?: number }) => (
+            {services.map((service: { id: string; title: string; description?: string; pricing_model: string; price_from?: number; price_to?: number; thumbnail_url?: string | null }) => (
               <div key={service.id} className="bg-card border border-border rounded-xl p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
+                <div className="flex items-start gap-4">
+                  {service.thumbnail_url && (
+                    <div className="relative h-20 w-28 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={service.thumbnail_url} alt={service.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-semibold">{service.title}</h3>
                     {service.description && (
                       <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
@@ -297,7 +303,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
                     </div>
                   )}
                   {service.pricing_model === 'contact' && (
-                    <Badge variant="outline">Contact for pricing</Badge>
+                    <Badge variant="outline" className="flex-shrink-0">Contact for pricing</Badge>
                   )}
                 </div>
               </div>

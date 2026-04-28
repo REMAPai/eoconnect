@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { createService } from '@/actions/services'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
-import { ChevronRight, ChevronLeft } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Upload } from 'lucide-react'
 
 const STEPS = ['Service Details', 'Review & Add']
 
@@ -39,11 +39,21 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
     price_from: '',
     price_to: '',
   })
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  const thumbnailInputRef = useRef<HTMLInputElement>(null)
 
   const update = (key: keyof FormData, value: string) =>
     setFormData(prev => ({ ...prev, [key]: value }))
 
   const showPriceFields = formData.pricing_model !== 'contact' && formData.pricing_model !== ''
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setThumbnailFile(file)
+    setThumbnailPreview(URL.createObjectURL(file))
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -54,6 +64,7 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
     fd.set('pricing_model', formData.pricing_model)
     if (formData.price_from) fd.set('price_from', formData.price_from)
     if (formData.price_to) fd.set('price_to', formData.price_to)
+    if (thumbnailFile) fd.set('thumbnail', thumbnailFile)
 
     startTransition(async () => {
       const result = await createService(businessId, fd)
@@ -151,6 +162,33 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
                 </div>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label>Thumbnail Image <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <div className="flex items-center gap-4">
+                <div
+                  onClick={() => thumbnailInputRef.current?.click()}
+                  className="relative h-20 w-28 rounded-lg border-2 border-dashed border-border overflow-hidden flex-shrink-0 bg-muted cursor-pointer hover:border-primary transition-colors"
+                >
+                  {thumbnailPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Upload className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <button type="button" onClick={() => thumbnailInputRef.current?.click()} className="text-sm text-primary hover:underline font-medium">
+                    {thumbnailPreview ? 'Change image' : 'Upload image'}
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-0.5">PNG or JPG · 4:3 ratio works best</p>
+                  {thumbnailFile && <p className="text-xs text-primary mt-0.5">{thumbnailFile.name} selected ✓</p>}
+                </div>
+                <input ref={thumbnailInputRef} type="file" accept="image/*" className="hidden" onChange={handleThumbnailChange} />
+              </div>
+            </div>
           </div>
         )}
 
