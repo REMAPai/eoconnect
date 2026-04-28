@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
   // Single profile fetch for all gating below.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, status, eo_membership_type, country')
+    .select('role, status, eo_membership_type, country, onboarded_at')
     .eq('id', user.id)
     .single() as {
       data: {
@@ -34,6 +34,7 @@ export async function proxy(request: NextRequest) {
         status: UserStatus
         eo_membership_type: EoMembershipType | null
         country: string | null
+        onboarded_at: string | null
       } | null
       error: unknown
     }
@@ -48,35 +49,40 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Onboarding gate: must have membership type + country before accessing app.
-  // Skip the gate for the onboarding page itself, sign-out, and API routes.
-  const exemptFromOnboardingGate =
-    pathname === '/onboarding' ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname === '/'
+  // Existing users (onboarded_at backfilled in migration 005) skip the gate
+  // entirely. Only brand-new signups (onboarded_at IS NULL) get guided through
+  // the onboarding form + business wizard.
+  const isNewUser = profile && !profile.onboarded_at
 
-  if (!exemptFromOnboardingGate && (!profile?.eo_membership_type || !profile?.country)) {
-    return NextResponse.redirect(new URL('/onboarding', request.url))
-  }
+  if (isNewUser) {
+    const exemptFromOnboardingGate =
+      pathname === '/onboarding' ||
+      pathname.startsWith('/auth') ||
+      pathname.startsWith('/api') ||
+      pathname.startsWith('/_next') ||
+      pathname === '/'
 
-  // Business-listing gate: once onboarded, user must list a business.
-  // Skip if they're already on the wizard, in admin, or onboarding.
-  const exemptFromBusinessGate =
-    exemptFromOnboardingGate ||
-    pathname.startsWith('/dashboard/business/new') ||
-    pathname.startsWith('/admin')
+    // Step 1: must complete the onboarding form
+    if (!exemptFromOnboardingGate && (!profile.eo_membership_type || !profile.country)) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
 
-  if (!exemptFromBusinessGate && profile?.eo_membership_type && profile?.country) {
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .maybeSingle() as { data: { id: string } | null; error: unknown }
+    // Step 2: must list a business
+    const exemptFromBusinessGate =
+      exemptFromOnboardingGate ||
+      pathname.startsWith('/dashboard/business/new') ||
+      pathname.startsWith('/admin')
 
-    if (!business) {
-      return NextResponse.redirect(new URL('/dashboard/business/new', request.url))
+    if (!exemptFromBusinessGate && profile.eo_membership_type && profile.country) {
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle() as { data: { id: string } | null; error: unknown }
+
+      if (!business) {
+        return NextResponse.redirect(new URL('/dashboard/business/new', request.url))
+      }
     }
   }
 

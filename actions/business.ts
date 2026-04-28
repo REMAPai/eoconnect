@@ -112,6 +112,14 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
 
     if (error) return { error: error.message }
     void data
+
+    // Mark new-user onboarding fully complete (only if not already set).
+    // Existing users were grandfathered in migration 005, so this is a no-op for them.
+    await db.from('profiles')
+      .update({ onboarded_at: new Date().toISOString() })
+      .eq('id', user.id)
+      .is('onboarded_at', null)
+
     revalidatePath('/marketplace')
     redirect('/dashboard/listings')
   } catch (err) {
@@ -131,9 +139,19 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
     .from('businesses')
     .select('id, owner_id')
     .eq('id', id)
-    .single()
+    .single() as { data: { id: string; owner_id: string } | null }
 
-  if (!existing || existing.owner_id !== user.id) return { error: 'Not authorized' }
+  if (!existing) return { error: 'Business not found' }
+
+  if (existing.owner_id !== user.id) {
+    // Allow admins to edit any business
+    const { data: me } = await db.from('profiles').select('role').eq('id', user.id).single() as {
+      data: { role: 'member' | 'chapter_admin' | 'super_admin' } | null
+    }
+    if (!me || !['chapter_admin', 'super_admin'].includes(me.role)) {
+      return { error: 'Not authorized' }
+    }
+  }
 
   const raw = {
     name: formData.get('name'),

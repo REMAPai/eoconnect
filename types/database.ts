@@ -18,6 +18,7 @@ export interface Profile {
   eo_membership_email: string | null
   eo_membership_type: EoMembershipType | null
   country: string | null
+  onboarded_at: string | null
   role: UserRole
   status: UserStatus
   created_at: string
@@ -66,6 +67,7 @@ export interface Service {
   pricing_model: PricingModel | null
   price_from: number | null
   price_to: number | null
+  thumbnail_url: string | null
   status: 'draft' | 'published'
   created_at: string
 }
