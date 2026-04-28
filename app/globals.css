@@ -4,7 +4,7 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme inline {
-  /* EOconnect colour tokens */
+  /* Member Market colour tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -21,7 +21,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-neon: #94F06B;
 
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
@@ -32,50 +31,73 @@
 
 :root {
   --radius: 0.5rem;
-  /* Light mode */
-  --background: #F4F4F4;
-  --foreground: #1A1C1C;
-  --card: #FFFFFF;
-  --card-foreground: #1A1C1C;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1C1C;
-  --primary: #94F06B;
-  --primary-foreground: #0F1113;
-  --secondary: #1A1C1E;
-  --secondary-foreground: #FFFFFF;
-  --muted: #E8E8E8;
-  --muted-foreground: #6B7280;
-  --accent: #94F06B;
-  --accent-foreground: #0F1113;
-  --destructive: #BA1A1A;
-  --border: #E2E2E2;
-  --input: #E2E2E2;
-  --ring: #94F06B;
-  --nav-bg: #1A1C1E;
-  --surface: #FFFFFF;
+
+  /* ─────────────────────────────────────────
+     Light mode — Member Market brand palette
+     - Cream background      (#f9f6f0)
+     - Deep forest green     (#2d5a3d)  ← primary
+     - Warm amber            (#c17d2a)  ← secondary / accent
+     - Charcoal text         (#1a1a1a)
+     ───────────────────────────────────────── */
+  --background: #f9f6f0;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  --primary: #2d5a3d;
+  --primary-foreground: #f9f6f0;
+  --secondary: #c17d2a;
+  --secondary-foreground: #ffffff;
+  --accent: #c17d2a;
+  --accent-foreground: #ffffff;
+
+  --muted: #efe9dc;
+  --muted-foreground: #6b6358;
+
+  --destructive: #b9412a;
+  --border: #e8e0d4;
+  --input: #e8e0d4;
+  --ring: #2d5a3d;
+
+  --nav-bg: #ffffff;
+  --surface: #ffffff;
 }
 
 [data-theme='dark'] {
-  --background: #0F1113;
-  --foreground: #FFFFFF;
-  --card: #1A1C1E;
-  --card-foreground: #FFFFFF;
-  --popover: #1A1C1E;
-  --popover-foreground: #FFFFFF;
-  --primary: #94F06B;
-  --primary-foreground: #0F1113;
-  --secondary: #2A2D2F;
-  --secondary-foreground: #FFFFFF;
-  --muted: #2A2D2F;
-  --muted-foreground: #9CA3AF;
-  --accent: #94F06B;
-  --accent-foreground: #0F1113;
-  --destructive: #BA1A1A;
-  --border: #2A2D2F;
-  --input: #2A2D2F;
-  --ring: #94F06B;
-  --nav-bg: #0F1113;
-  --surface: #1A1C1E;
+  /* ─────────────────────────────────────────
+     Dark mode — same brand, low-light variant
+     - Deep forest base       (#162018)
+     - Lifted card            (#1f2a22)
+     - Lighter forest green   (#5b9b6d)  ← primary (more contrast)
+     - Lighter amber          (#d99551)  ← secondary
+     - Cream text             (#f4f1e9)
+     ───────────────────────────────────────── */
+  --background: #162018;
+  --foreground: #f4f1e9;
+  --card: #1f2a22;
+  --card-foreground: #f4f1e9;
+  --popover: #1f2a22;
+  --popover-foreground: #f4f1e9;
+
+  --primary: #5b9b6d;
+  --primary-foreground: #0f170f;
+  --secondary: #d99551;
+  --secondary-foreground: #1a1a1a;
+  --accent: #d99551;
+  --accent-foreground: #1a1a1a;
+
+  --muted: #243029;
+  --muted-foreground: #a8b5ab;
+
+  --destructive: #d2553e;
+  --border: #2c3a31;
+  --input: #2c3a31;
+  --ring: #5b9b6d;
+
+  --nav-bg: #162018;
+  --surface: #1f2a22;
 }
 
 @layer base {

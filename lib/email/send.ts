@@ -33,10 +33,10 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
 const wrap = (title: string, body: string) => `
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>${title}</title></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;">
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9f6f0;">
   <div style="max-width:560px;margin:40px auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
     <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;">
-      Member<span style="color:#5546ff;">Market</span>
+      Member<span style="color:#2d5a3d;">Market</span>
     </div>
     ${body}
     <p style="font-size:12px;color:#999;margin-top:32px;border-top:1px solid #eee;padding-top:16px;">
@@ -53,7 +53,7 @@ export function welcomeEmail(name: string, siteUrl: string) {
       send inquiries, and post your own services to reach the network.
     </p>
     <p style="margin-top:24px;">
-      <a href="${siteUrl}/marketplace" style="background:#5546ff;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+      <a href="${siteUrl}/marketplace" style="background:#2d5a3d;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
         Browse the marketplace
       </a>
     </p>
@@ -67,11 +67,11 @@ export function newMessageEmail(senderName: string, businessName: string | null,
     html: wrap(subject, `
       <h1 style="font-size:18px;margin:0 0 12px;">${senderName} sent you a message</h1>
       ${businessName ? `<p style="color:#666;font-size:13px;margin:0 0 12px;">re: ${businessName}</p>` : ''}
-      <blockquote style="border-left:3px solid #5546ff;padding:8px 16px;margin:16px 0;background:#fafafa;font-size:14px;color:#333;">
+      <blockquote style="border-left:3px solid #2d5a3d;padding:8px 16px;margin:16px 0;background:#fafafa;font-size:14px;color:#333;">
         ${escapeHtml(preview)}
       </blockquote>
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/dashboard/messages?conversation=${conversationId}" style="background:#5546ff;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/dashboard/messages?conversation=${conversationId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           Reply
         </a>
       </p>
@@ -85,10 +85,10 @@ export function newReviewEmail(reviewerName: string, businessName: string, ratin
     subject: `${reviewerName} left you a ${rating}-star review`,
     html: wrap('New review', `
       <h1 style="font-size:18px;margin:0 0 8px;">${reviewerName} reviewed ${businessName}</h1>
-      <p style="font-size:18px;color:#5546ff;margin:0 0 16px;letter-spacing:2px;">${stars}</p>
+      <p style="font-size:18px;color:#2d5a3d;margin:0 0 16px;letter-spacing:2px;">${stars}</p>
       ${body ? `<blockquote style="border-left:3px solid #ddd;padding:8px 16px;margin:16px 0;background:#fafafa;font-size:14px;color:#333;">${escapeHtml(body)}</blockquote>` : ''}
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/marketplace/${businessId}" style="background:#5546ff;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/marketplace/${businessId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           View & reply
         </a>
       </p>
@@ -106,7 +106,7 @@ export function adApprovedEmail(businessName: string, siteUrl: string, campaignI
         Check back to see how it's performing.
       </p>
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#5546ff;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           View campaign
         </a>
       </p>
@@ -124,7 +124,7 @@ export function adRejectedEmail(businessName: string, reason: string, siteUrl: s
         You can edit and resubmit your campaign — your budget is still on file.
       </p>
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#5546ff;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           Edit campaign
         </a>
       </p>

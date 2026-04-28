@@ -53,7 +53,7 @@ export function AnalyticsChart({ data }: AnalyticsChartProps) {
           <Line
             type="monotone"
             dataKey="views"
-            stroke="#94F06B"
+            stroke="#2d5a3d"
             dot={false}
             strokeWidth={2}
             name="Views"
@@ -61,7 +61,7 @@ export function AnalyticsChart({ data }: AnalyticsChartProps) {
           <Line
             type="monotone"
             dataKey="contact_clicks"
-            stroke="#6B7280"
+            stroke="#c17d2a"
             dot={false}
             strokeWidth={2}
             name="Contact Clicks"

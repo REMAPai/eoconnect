@@ -24,9 +24,9 @@ export default function RootLayout({
       <body className={plusJakartaSans.variable}>
         <ThemeProvider
           attribute="data-theme"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
-          storageKey="eoconnect-theme"
+          storageKey="member-market-theme"
         >
           {children}
           <Toaster position="bottom-right" richColors closeButton />
