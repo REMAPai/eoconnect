@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { uploadFile } from '@/lib/storage'
+import { refreshBusinessEmbedding } from '@/lib/ai/refresh-business-embedding'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
@@ -111,7 +112,6 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
       .single()
 
     if (error) return { error: error.message }
-    void data
 
     // Mark new-user onboarding fully complete (only if not already set).
     // Existing users were grandfathered in migration 005, so this is a no-op for them.
@@ -119,6 +119,11 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
       .update({ onboarded_at: new Date().toISOString() })
       .eq('id', user.id)
       .is('onboarded_at', null)
+
+    // Compute search embedding (fire-and-forget — don't block redirect)
+    if (data?.id) {
+      void refreshBusinessEmbedding(db, data.id)
+    }
 
     revalidatePath('/marketplace')
     redirect('/dashboard/listings')
@@ -208,6 +213,9 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
 
     const { error } = await db.from('businesses').update(updateData).eq('id', id)
     if (error) return { error: error.message }
+
+    // Refresh search embedding (fire-and-forget)
+    void refreshBusinessEmbedding(db, id)
 
     revalidatePath('/marketplace')
     revalidatePath(`/marketplace/${id}`)

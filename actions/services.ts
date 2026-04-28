@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { uploadFile } from '@/lib/storage'
+import { refreshBusinessEmbedding } from '@/lib/ai/refresh-business-embedding'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -72,6 +73,7 @@ export async function createService(business_id: string, formData: FormData): Pr
     .single()
 
   if (error) return { error: error.message }
+  void refreshBusinessEmbedding(db, business_id)
   revalidatePath('/dashboard/listings')
   revalidatePath(`/marketplace/${business_id}`)
   return { error: null, id: data.id }
@@ -116,6 +118,7 @@ export async function updateService(id: string, formData: FormData): Promise<Ser
   const { error } = await db.from('services').update(updateData).eq('id', id)
   if (error) return { error: error.message }
 
+  void refreshBusinessEmbedding(db, service.business_id)
   revalidatePath('/dashboard/listings')
   revalidatePath(`/marketplace/${service.business_id}`)
   return { error: null }
@@ -142,6 +145,7 @@ export async function deleteService(id: string): Promise<ServiceActionResult> {
   const { error } = await db.from('services').delete().eq('id', id)
   if (error) return { error: error.message }
 
+  void refreshBusinessEmbedding(db, service.business_id)
   revalidatePath('/dashboard/listings')
   revalidatePath(`/marketplace/${service.business_id}`)
   return { error: null }
