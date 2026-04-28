@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTransition } from 'react'
-import { Bell, MessageSquare, Settings, User } from 'lucide-react'
+import { Settings, User } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
+import { MessageIndicator, NotificationBell } from './notification-indicator'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils'
 
 interface NavbarProps {
   profile: Profile | null
+  unreadMessages?: number
 }
 
 const navLinks = [
@@ -26,7 +28,7 @@ const navLinks = [
   { href: '/dashboard/ads', label: 'Ads' },
 ]
 
-export function Navbar({ profile }: NavbarProps) {
+export function Navbar({ profile, unreadMessages = 0 }: NavbarProps) {
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
 
@@ -56,14 +58,8 @@ export function Navbar({ profile }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/dashboard/messages">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Bell className="h-4 w-4" />
-          </Button>
+          {profile && <MessageIndicator initialCount={unreadMessages} userId={profile.id} />}
+          <NotificationBell />
           <ThemeToggle />
           <Link
             href="/dashboard/listings/new"

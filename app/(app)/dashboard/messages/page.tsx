@@ -48,8 +48,10 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
       : Promise.resolve({ data: [] }),
   ])
 
-  const profileMap = new Map((profiles ?? []).map((p: { id: string; full_name: string; avatar_url: string | null }) => [p.id, p]))
-  const bizMap = new Map((businesses ?? []).map((b: { id: string; name: string; logo_url: string | null }) => [b.id, b]))
+  type ProfileRow = { id: string; full_name: string; avatar_url: string | null }
+  type BusinessRow = { id: string; name: string; logo_url: string | null }
+  const profileMap = new Map<string, ProfileRow>((profiles ?? []).map((p: ProfileRow) => [p.id, p]))
+  const bizMap = new Map<string, BusinessRow>((businesses ?? []).map((b: BusinessRow) => [b.id, b]))
   const lastMsgMap = new Map<string, { body: string; created_at: string; read_at: string | null; sender_id: string }>()
   for (const m of (lastMsgs ?? [])) {
     if (!lastMsgMap.has(m.conversation_id)) lastMsgMap.set(m.conversation_id, m)
