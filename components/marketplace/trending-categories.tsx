@@ -15,11 +15,11 @@ import type { Category } from '@/types/database'
  * Category images keyed by slug — fall back to gradient if not mapped.
  */
 
-// Per-category images. EMPTY for now — user will provide custom artwork.
-// Until then, cards render with a clean green gradient placeholder.
-//
-// To wire an image:  'category-slug': 'https://...'
-const CATEGORY_IMAGES: Record<string, string> = {}
+// Per-category images. Files live in /public/images/categories/<slug>.jpg
+// Add a slug here only when the matching file is committed.
+const CATEGORY_IMAGES: Record<string, string> = {
+  'ai-machine-learning': '/images/categories/ai-machine-learning.jpg',
+}
 
 // Per-category one-liners for the hero & medium cards.
 const CATEGORY_TAGLINES: Record<string, string> = {
