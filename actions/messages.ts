@@ -133,11 +133,14 @@ export async function startConversation(formData: FormData) {
 
   if (error || !conversation) redirect('/dashboard/messages')
 
-  // fire-and-forget analytics
-  db.rpc('increment_listing_stat', {
+  // Increment contact_clicks before redirecting so analytics is recorded.
+  // Awaiting blocks the redirect by ~50ms but guarantees the RPC actually
+  // fires (unawaited rpc() never executes in supabase-js + serverless).
+  const { error: rpcErr } = await db.rpc('increment_listing_stat', {
     p_business_id: business_id,
     p_stat: 'contact_clicks',
   })
+  if (rpcErr) console.error('[analytics] contact_clicks rpc error:', rpcErr)
 
   redirect(`/dashboard/messages?conversation=${conversation.id}`)
 }

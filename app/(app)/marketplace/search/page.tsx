@@ -184,13 +184,29 @@ async function SearchResults({ searchParams }: SearchPageProps) {
       .filter((x): x is { business: Business; campaignId: string } => x !== null)
   }
 
-  // ── Self-healing search ──
-  // After the response is sent, populate embeddings for any business that
-  // doesn't have one yet. Uses the service-role client so it bypasses RLS
-  // and can update any row. Within a few searches all businesses end up
-  // embedded, and from then on every search hits the fast vector path.
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.OPENAI_API_KEY) {
-    after(async () => {
+  // ── Post-response side effects ──
+  // 1. Increment search_appearances for every business shown (organic +
+  //    sponsored). Was missing entirely — dashboard always read 0.
+  // 2. Populate embeddings for any business that doesn't have one yet
+  //    (self-healing semantic search).
+  const shownBusinessIds = [
+    ...results.map(b => b.id),
+    ...sponsoredBusinesses.map(s => s.business.id),
+  ]
+  after(async () => {
+    // Track search_appearances for each shown business
+    if (queryText && shownBusinessIds.length > 0) {
+      try {
+        await Promise.all(shownBusinessIds.map(id =>
+          db.rpc('increment_listing_stat', { p_business_id: id, p_stat: 'search_appearances' })
+        ))
+      } catch (err) {
+        console.error('[analytics] search_appearances rpc failed:', err)
+      }
+    }
+
+    // Embedding self-heal (separate try block so analytics failure doesn't kill backfill)
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.OPENAI_API_KEY) {
       try {
         const admin = createSupabaseClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -208,8 +224,8 @@ async function SearchResults({ searchParams }: SearchPageProps) {
       } catch (err) {
         console.error('post-search backfill failed:', err)
       }
-    })
-  }
+    }
+  })
 
   return (
     <div className="flex gap-8">

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { after } from 'next/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
@@ -58,11 +59,26 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
 
   if (!business) notFound()
 
-  // fire-and-forget analytics + ad personalization
-  db.rpc('increment_listing_stat', { p_business_id: listingId, p_stat: 'views' })
-  if (user && business.category_ids?.length > 0) {
-    db.rpc('increment_user_category_view', { p_category_ids: business.category_ids })
-  }
+  // Analytics + ad personalization run AFTER the response is sent.
+  // Earlier code didn't await the rpc(); supabase-js only fires the HTTP
+  // call when awaited, and serverless functions terminate before unawaited
+  // promises execute, so nothing was ever recorded. after() runs it
+  // post-response and logs any error so we can see RPC issues.
+  // Skip self-views — owners shouldn't pad their own view counts.
+  const isViewerOwner = user?.id === business.owner_id
+  after(async () => {
+    try {
+      if (!isViewerOwner) {
+        const { error } = await db.rpc('increment_listing_stat', { p_business_id: listingId, p_stat: 'views' })
+        if (error) console.error('[analytics] views rpc error:', error)
+      }
+      if (user && business.category_ids?.length > 0) {
+        await db.rpc('increment_user_category_view', { p_category_ids: business.category_ids })
+      }
+    } catch (err) {
+      console.error('[analytics] listing-view side-effects failed:', err)
+    }
+  })
 
   const reviewList = (reviews ?? []) as Array<{
     id: string
