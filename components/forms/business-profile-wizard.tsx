@@ -104,6 +104,33 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
   const progress = ((step + 1) / STEPS.length) * 100
   const totalCategories = formData.category_ids.length + formData.custom_categories.split(',').filter(s => s.trim()).length
 
+  // All non-social fields are required (per CEO). Returns first missing field message.
+  const validateStep = (n: number): string | null => {
+    if (n === 0) {
+      if (!formData.name.trim()) return 'Business name is required'
+      if (!formData.tagline.trim()) return 'Tagline is required'
+      if (!formData.description.trim()) return 'Description is required'
+      if (!formData.founded_year.trim()) return 'Founded year is required'
+      if (!formData.team_size) return 'Team size is required'
+      if (!formData.city.trim()) return 'City is required'
+      if (!formData.country.trim()) return 'Country is required'
+    }
+    if (n === 1) {
+      if (totalCategories === 0) return 'Pick at least one category'
+      if (!formData.tags.trim()) return 'Add at least one keyword'
+      if (!formData.website.trim()) return 'Website is required'
+    }
+    if (n === 2) {
+      if (!formData.email.trim()) return 'Business email is required'
+      if (!formData.phone.trim()) return 'Phone is required'
+    }
+    if (n === 3) {
+      if (!logoFile) return 'Logo is required'
+      if (!coverFile) return 'Cover image is required'
+    }
+    return null
+  }
+
   return (
     <div className="max-w-xl mx-auto">
       <div className="mb-8">
@@ -126,20 +153,20 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
               <Input id="name" value={formData.name} onChange={e => update('name', e.target.value)} placeholder="Acme Consulting Ltd." required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tagline">Tagline</Label>
-              <Input id="tagline" value={formData.tagline} onChange={e => update('tagline', e.target.value)} placeholder="One-line description of what you do" />
+              <Label htmlFor="tagline">Tagline *</Label>
+              <Input id="tagline" value={formData.tagline} onChange={e => update('tagline', e.target.value)} placeholder="One-line description of what you do" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" value={formData.description} onChange={e => update('description', e.target.value)} placeholder="Describe your business, what makes you different…" rows={4} />
+              <Label htmlFor="description">Description *</Label>
+              <Textarea id="description" value={formData.description} onChange={e => update('description', e.target.value)} placeholder="Describe your business, what makes you different…" rows={4} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="founded_year">Founded Year</Label>
-                <Input id="founded_year" type="number" value={formData.founded_year} onChange={e => update('founded_year', e.target.value)} placeholder="2018" min="1900" max={new Date().getFullYear()} />
+                <Label htmlFor="founded_year">Founded Year *</Label>
+                <Input id="founded_year" type="number" value={formData.founded_year} onChange={e => update('founded_year', e.target.value)} placeholder="2018" min="1900" max={new Date().getFullYear()} required />
               </div>
               <div className="space-y-2">
-                <Label>Team Size</Label>
+                <Label>Team Size *</Label>
                 <Select value={formData.team_size} onValueChange={(v: string | null) => update('team_size', v ?? '')}>
                   <SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger>
                   <SelectContent>
@@ -150,12 +177,12 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" value={formData.city} onChange={e => update('city', e.target.value)} placeholder="London" />
+                <Label htmlFor="city">City *</Label>
+                <Input id="city" value={formData.city} onChange={e => update('city', e.target.value)} placeholder="London" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <Input id="country" value={formData.country} onChange={e => update('country', e.target.value)} placeholder="United Kingdom" />
+                <Label htmlFor="country">Country *</Label>
+                <Input id="country" value={formData.country} onChange={e => update('country', e.target.value)} placeholder="United Kingdom" required />
               </div>
             </div>
           </div>
@@ -197,13 +224,13 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tags">Keywords / Tags</Label>
-              <Input id="tags" value={formData.tags} onChange={e => update('tags', e.target.value)} placeholder="SaaS, fintech, B2B (comma-separated)" />
+              <Label htmlFor="tags">Keywords / Tags *</Label>
+              <Input id="tags" value={formData.tags} onChange={e => update('tags', e.target.value)} placeholder="SaaS, fintech, B2B (comma-separated)" required />
               <p className="text-xs text-muted-foreground">Add up to 10 keywords to improve discoverability.</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input id="website" type="url" value={formData.website} onChange={e => update('website', e.target.value)} placeholder="https://yourcompany.com" />
+              <Label htmlFor="website">Website *</Label>
+              <Input id="website" value={formData.website} onChange={e => update('website', e.target.value)} placeholder="remap.ai" required />
             </div>
           </div>
         )}
@@ -213,12 +240,12 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Contact Details</h2>
             <div className="space-y-2">
-              <Label htmlFor="email">Business Email</Label>
-              <Input id="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="hello@yourcompany.com" />
+              <Label htmlFor="email">Business Email *</Label>
+              <Input id="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="hello@yourcompany.com" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="+44 20 7946 0958" />
+              <Label htmlFor="phone">Phone *</Label>
+              <Input id="phone" value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="+44 20 7946 0958" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="social_linkedin">LinkedIn</Label>
@@ -238,7 +265,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
 
             {/* Logo */}
             <div className="space-y-2">
-              <Label>Logo</Label>
+              <Label>Logo *</Label>
               <div className="flex items-center gap-4">
                 <div
                   className="relative h-20 w-20 rounded-xl border-2 border-border overflow-hidden flex-shrink-0 bg-muted cursor-pointer hover:border-primary transition-colors"
@@ -265,7 +292,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
 
             {/* Cover */}
             <div className="space-y-2">
-              <Label>Cover Image</Label>
+              <Label>Cover Image *</Label>
               <div
                 className="relative w-full h-36 rounded-xl border-2 border-dashed border-border overflow-hidden cursor-pointer hover:border-primary transition-colors bg-muted"
                 onClick={() => coverInputRef.current?.click()}
@@ -370,7 +397,8 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
             <Button
               type="button"
               onClick={() => {
-                if (step === 0 && !formData.name.trim()) { setError('Business name is required'); return }
+                const validationError = validateStep(step)
+                if (validationError) { setError(validationError); return }
                 setError(null)
                 setStep(s => s + 1)
               }}

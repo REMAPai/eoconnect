@@ -110,17 +110,18 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={e => update('description', e.target.value)}
                 placeholder="Describe what this service includes…"
                 rows={4}
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label>Pricing Model</Label>
+              <Label>Pricing Model *</Label>
               <Select
                 value={formData.pricing_model || undefined}
                 onValueChange={(v: string | null) => update('pricing_model', v ?? '')}
@@ -139,7 +140,7 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
             {showPriceFields && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price_from">Price From ($)</Label>
+                  <Label htmlFor="price_from">Price From ($) *</Label>
                   <Input
                     id="price_from"
                     type="number"
@@ -147,6 +148,7 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
                     value={formData.price_from}
                     onChange={e => update('price_from', e.target.value)}
                     placeholder="100"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -164,7 +166,7 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
             )}
 
             <div className="space-y-2">
-              <Label>Thumbnail Image <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label>Thumbnail Image *</Label>
               <div className="flex items-center gap-4">
                 <div
                   onClick={() => thumbnailInputRef.current?.click()}
@@ -252,14 +254,11 @@ export function PostServiceWizard({ businessId, onSuccess }: PostServiceWizardPr
             <Button
               type="button"
               onClick={() => {
-                if (!formData.title.trim()) {
-                  setError('Service title is required')
-                  return
-                }
-                if (!formData.pricing_model) {
-                  setError('Please select a pricing model')
-                  return
-                }
+                if (!formData.title.trim()) { setError('Service title is required'); return }
+                if (!formData.description.trim()) { setError('Description is required'); return }
+                if (!formData.pricing_model) { setError('Please select a pricing model'); return }
+                if (showPriceFields && !formData.price_from) { setError('Price is required for this pricing model'); return }
+                if (!thumbnailFile) { setError('Thumbnail image is required'); return }
                 setError(null)
                 setStep(1)
               }}
