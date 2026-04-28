@@ -301,17 +301,43 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
                 )
               }
 
+              // PDF preview card — embed first page, then filename row below.
+              // PDF URL hash params (#toolbar=0&navpanes=0...) suppress the
+              // built-in viewer chrome so the inline preview reads as a
+              // thumbnail. <object> is used over <iframe> so we get a clean
+              // fallback (FileText icon) on browsers that can't render PDFs
+              // inline (older mobile Safari, some embedded webviews).
+              const previewSrc = `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`
               return (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                   className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary transition-colors group">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <FileText className="h-6 w-6 text-primary" />
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-card border border-border rounded-xl overflow-hidden hover:border-primary transition-colors group"
+                >
+                  <div className="relative h-56 bg-muted overflow-hidden">
+                    <object
+                      data={previewSrc}
+                      type="application/pdf"
+                      className="w-full h-full pointer-events-none"
+                      aria-label={`Preview of ${filename}`}
+                    >
+                      {/* Fallback if browser can't render embedded PDFs */}
+                      <div className="flex items-center justify-center h-full">
+                        <FileText className="h-12 w-12 text-muted-foreground" />
+                      </div>
+                    </object>
+                    {/* Click-catcher so taps anywhere open the full PDF in a new tab */}
+                    <div className="absolute inset-0" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">{filename}</p>
-                    <p className="text-xs text-muted-foreground">PDF · click to open</p>
+                  <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
+                    <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                    <p className="font-medium text-sm truncate flex-1 group-hover:text-primary transition-colors">
+                      {filename}
+                    </p>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                   </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 </a>
               )
             })}
