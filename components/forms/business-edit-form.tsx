@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, FileText, ImageIcon } from 'lucide-react'
 import type { Business, Category } from '@/types/database'
 
 const TEAM_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'] as const
@@ -26,7 +26,6 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
   const [logoPreview, setLogoPreview] = useState<string | null>(business.logo_url ?? null)
   const [coverPreview, setCoverPreview] = useState<string | null>(business.cover_url ?? null)
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([])
-  const [portfolioNewPreviews, setPortfolioNewPreviews] = useState<string[]>([])
   const [portfolioExisting, setPortfolioExisting] = useState<string[]>((business as { portfolio_urls?: string[] }).portfolio_urls ?? [])
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
@@ -66,10 +65,10 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
   }
 
   const handlePortfolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).slice(0, 5 - portfolioFiles.length - portfolioExisting.length)
+    const slotsLeft = 5 - portfolioFiles.length - portfolioExisting.length
+    const files = Array.from(e.target.files ?? []).slice(0, slotsLeft)
     if (!files.length) return
     setPortfolioFiles(prev => [...prev, ...files].slice(0, 5 - portfolioExisting.length))
-    setPortfolioNewPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))].slice(0, 5 - portfolioExisting.length))
     e.target.value = ''
   }
 
@@ -79,7 +78,6 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
 
   const removeNewPortfolio = (index: number) => {
     setPortfolioFiles(prev => prev.filter((_, i) => i !== index))
-    setPortfolioNewPreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -306,38 +304,67 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
           />
         </div>
 
-        {/* Portfolio */}
+        {/* Portfolio — PDF documents (legacy image URLs still render) */}
         <div className="space-y-2">
-          <Label>Portfolio Images (up to 5)</Label>
-          {(portfolioExisting.length > 0 || portfolioNewPreviews.length > 0) && (
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              {portfolioExisting.map((src, i) => (
-                <div key={`existing-${i}`} className="relative h-24 rounded-lg overflow-hidden border border-border group">
-                  <img src={src} alt={`Portfolio ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeExistingPortfolio(i)}
-                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              {portfolioNewPreviews.map((src, i) => (
-                <div key={`new-${i}`} className="relative h-24 rounded-lg overflow-hidden border border-primary/50 group">
-                  <img src={src} alt={`New portfolio ${i + 1}`} className="w-full h-full object-cover" />
-                  <span className="absolute bottom-1 left-1 text-xs bg-primary text-primary-foreground px-1 rounded">New</span>
+          <Label>Portfolio Documents (up to 5 PDFs)</Label>
+          <p className="text-xs text-muted-foreground">Case studies, decks, capability statements.</p>
+
+          {/* Existing items — could be PDFs (new) or images (legacy) */}
+          {portfolioExisting.length > 0 && (
+            <div className="space-y-2 mt-1">
+              {portfolioExisting.map((src, i) => {
+                const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(src)
+                const filename = (() => {
+                  try { return decodeURIComponent(src.split('/').pop() ?? '').split('?')[0] || `Document ${i + 1}` }
+                  catch { return `Document ${i + 1}` }
+                })()
+                return (
+                  <div key={`existing-${i}`} className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg">
+                    {isImage ? (
+                      <ImageIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    ) : (
+                      <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                    )}
+                    <a href={src} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:text-primary flex-1 min-w-0">
+                      {filename}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => removeExistingPortfolio(i)}
+                      className="text-muted-foreground hover:text-destructive p-1"
+                      aria-label="Remove document"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* New uploads in this session */}
+          {portfolioFiles.length > 0 && (
+            <div className="space-y-2 mt-1">
+              {portfolioFiles.map((file, i) => (
+                <div key={`new-${i}`} className="flex items-center gap-3 p-3 bg-background border border-primary/40 rounded-lg">
+                  <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB · pending upload</p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeNewPortfolio(i)}
-                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-muted-foreground hover:text-destructive p-1"
+                    aria-label="Remove document"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               ))}
             </div>
           )}
+
           {(portfolioExisting.length + portfolioFiles.length) < 5 && (
             <div
               className="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors"
@@ -346,15 +373,15 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
               <Upload className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
                 {portfolioExisting.length + portfolioFiles.length > 0
-                  ? `Add more (${5 - portfolioExisting.length - portfolioFiles.length} remaining)`
-                  : 'Upload portfolio images'}
+                  ? `Add more PDFs (${5 - portfolioExisting.length - portfolioFiles.length} remaining)`
+                  : 'Upload portfolio PDFs'}
               </span>
             </div>
           )}
           <input
             ref={portfolioInputRef}
             type="file"
-            accept="image/*"
+            accept="application/pdf,.pdf"
             multiple
             className="hidden"
             onChange={handlePortfolioChange}

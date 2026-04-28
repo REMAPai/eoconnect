@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MapPin, Globe, Phone, Mail, Star, Calendar, Users } from 'lucide-react'
+import { MapPin, Globe, Phone, Mail, Star, Calendar, Users, FileText, ExternalLink } from 'lucide-react'
 
 // Inline brand SVGs — Lucide 1.x dropped brand icons into a separate package.
 const LinkedinIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -274,17 +274,47 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
         </div>
       </div>
 
-      {/* Portfolio */}
+      {/* Portfolio Documents */}
       {portfolioUrls.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-4">Portfolio</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {portfolioUrls.map((url, i) => (
-              <div key={i} className="relative h-40 rounded-xl overflow-hidden bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Portfolio ${i + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
+          <h2 className="text-xl font-bold mb-4">Portfolio Documents</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {portfolioUrls.map((url, i) => {
+              const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url)
+              const filename = (() => {
+                try {
+                  const last = decodeURIComponent(url.split('/').pop() ?? '').split('?')[0]
+                  return last || `Document ${i + 1}`
+                } catch {
+                  return `Document ${i + 1}`
+                }
+              })()
+
+              if (isImage) {
+                // Legacy image-based portfolio entries — still render as thumbnails
+                return (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                     className="relative h-40 rounded-xl overflow-hidden bg-muted block group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={filename} className="w-full h-full object-cover transition-transform group-hover:scale-[1.02]" />
+                  </a>
+                )
+              }
+
+              return (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary transition-colors group">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">{filename}</p>
+                    <p className="text-xs text-muted-foreground">PDF · click to open</p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </a>
+              )
+            })}
           </div>
         </section>
       )}

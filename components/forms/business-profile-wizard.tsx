@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
-import { ChevronRight, ChevronLeft, Upload, X } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Upload, X, FileText } from 'lucide-react'
 import type { Category } from '@/types/database'
 
 const STEPS = ['Business Basics', 'Categories & Keywords', 'Contact Details', 'Media', 'Review & Publish']
@@ -316,20 +316,26 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
             </div>
 
-            {/* Portfolio */}
+            {/* Portfolio — PDF documents */}
             <div className="space-y-2">
-              <Label>Portfolio Images (up to 5)</Label>
-              {portfolioPreviews.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mb-2">
-                  {portfolioPreviews.map((src, i) => (
-                    <div key={i} className="relative h-24 rounded-lg overflow-hidden border border-border group">
-                      <img src={src} alt={`Portfolio ${i + 1}`} className="w-full h-full object-cover" />
+              <Label>Portfolio Documents (up to 5 PDFs)</Label>
+              <p className="text-xs text-muted-foreground">Case studies, decks, capability statements — anything that backs up your offering.</p>
+              {portfolioFiles.length > 0 && (
+                <div className="space-y-2 mt-1">
+                  {portfolioFiles.map((file, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-background border border-border rounded-lg">
+                      <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => removePortfolioImage(i)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="text-muted-foreground hover:text-destructive p-1"
+                        aria-label="Remove document"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </button>
                     </div>
                   ))}
@@ -342,11 +348,11 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                 >
                   <Upload className="h-5 w-5 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    {portfolioFiles.length > 0 ? `Add more (${5 - portfolioFiles.length} remaining)` : 'Upload portfolio images'}
+                    {portfolioFiles.length > 0 ? `Add more PDFs (${5 - portfolioFiles.length} remaining)` : 'Upload portfolio PDFs'}
                   </span>
                 </div>
               )}
-              <input ref={portfolioInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePortfolioChange} />
+              <input ref={portfolioInputRef} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={handlePortfolioChange} />
             </div>
           </div>
         )}
@@ -363,7 +369,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                 <div className="flex justify-between"><span className="text-muted-foreground">Keywords</span><span>{formData.tags ? formData.tags.split(',').filter(Boolean).length : 0}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Logo</span><span>{logoFile ? '✓ uploaded' : '—'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Cover</span><span>{coverFile ? '✓ uploaded' : '—'}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Portfolio</span><span>{portfolioFiles.length > 0 ? `${portfolioFiles.length} image(s)` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Portfolio</span><span>{portfolioFiles.length > 0 ? `${portfolioFiles.length} PDF${portfolioFiles.length === 1 ? '' : 's'}` : '—'}</span></div>
               </div>
               <p className="text-sm text-muted-foreground">
                 Your listing will go live immediately. You can edit or pause it at any time from your dashboard.

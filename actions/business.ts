@@ -78,7 +78,13 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
     const portfolio_urls: string[] = []
     for (const file of portfolioFiles.slice(0, 5)) {
       if (file.size > 0) {
-        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}-${Date.now()}-${Math.random()}`, file)
+        // Preserve a sanitized version of the original filename so
+        // viewers see "Brand_Strategy_Deck.pdf" instead of an opaque hash.
+        const safeName = file.name
+          .toLowerCase()
+          .replace(/[^a-z0-9.-]/g, '_')
+          .slice(0, 80) || 'document.pdf'
+        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}/${Date.now()}-${safeName}`, file)
         portfolio_urls.push(url)
       }
     }
@@ -203,7 +209,11 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
     const newPortfolioUrls: string[] = []
     for (const file of portfolioNewFiles.slice(0, 5)) {
       if (file.size > 0) {
-        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}-${Date.now()}-${Math.random()}`, file)
+        const safeName = file.name
+          .toLowerCase()
+          .replace(/[^a-z0-9.-]/g, '_')
+          .slice(0, 80) || 'document.pdf'
+        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}/${Date.now()}-${safeName}`, file)
         newPortfolioUrls.push(url)
       }
     }
