@@ -45,16 +45,6 @@ export default async function MarketplacePage() {
         <div className="flex justify-center mt-6">
           <SearchBar />
         </div>
-        {categories && (
-          <div className="flex items-center gap-2 justify-center flex-wrap mt-4 text-sm text-muted-foreground">
-            {categories.slice(0, 5).map((cat: { id: string; slug: string; name: string }) => (
-              <Link key={cat.id} href={`/marketplace/search?category=${cat.slug}`}
-                className="hover:text-primary transition-colors">
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* Trending in EO — featured mosaic */}

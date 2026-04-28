@@ -58,9 +58,8 @@ export function SearchBar({ defaultValue = '' }: { defaultValue?: string }) {
       </div>
       <Button
         type="submit"
-        size="lg"
         disabled={isPending || !query.trim()}
-        className="bg-primary text-primary-foreground font-bold px-6 gap-1.5"
+        className="h-12 bg-primary text-primary-foreground font-bold px-6 gap-1.5"
       >
         {isPending ? (
           <>
