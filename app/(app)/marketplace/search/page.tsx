@@ -52,9 +52,8 @@ async function SearchResults({ searchParams }: SearchPageProps) {
   const queryText = params.q?.trim()
 
   if (queryText) {
-    // ── Vector search (fast path) ──
+    // ── Tier 1: Vector search (semantic) ──
     const queryEmbedding = await getEmbedding(queryText)
-
     if (queryEmbedding) {
       const { data: matches } = await db.rpc('search_businesses_by_embedding', {
         query_embedding: queryEmbedding,
@@ -66,15 +65,40 @@ async function SearchResults({ searchParams }: SearchPageProps) {
         const ids = matches.map(m => m.id)
         const { data: rows } = await buildBase().in('id', ids) as { data: Business[] | null }
         const byId = new Map((rows ?? []).map(r => [r.id, r]))
-        // Preserve similarity ordering, drop any filtered out by hard filters
         results = matches.map(m => byId.get(m.id)).filter((b): b is Business => !!b)
       }
-    } else {
-      // Fallback: no API key or embedding error → keyword FTS
+    }
+
+    // ── Tier 2: Postgres full-text search (vector returned 0 or skipped) ──
+    if (results.length === 0) {
       const { data: rows } = await buildBase()
         .textSearch('search_vector', queryText, { type: 'websearch', config: 'english' })
         .limit(50) as { data: Business[] | null }
       results = rows ?? []
+    }
+
+    // ── Tier 3: Plain ILIKE on business name/tagline/description ──
+    if (results.length === 0) {
+      const escaped = queryText.replace(/[%_\\]/g, m => '\\' + m)
+      const { data: rows } = await buildBase()
+        .or(`name.ilike.%${escaped}%,tagline.ilike.%${escaped}%,description.ilike.%${escaped}%`)
+        .limit(50) as { data: Business[] | null }
+      results = rows ?? []
+    }
+
+    // ── Tier 4: Services title/description match → parent business ──
+    if (results.length === 0) {
+      const escaped = queryText.replace(/[%_\\]/g, m => '\\' + m)
+      const { data: svcRows } = await db.from('services')
+        .select('business_id')
+        .eq('status', 'published')
+        .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
+        .limit(50) as { data: Array<{ business_id: string }> | null }
+      if (svcRows && svcRows.length > 0) {
+        const ids = [...new Set(svcRows.map(r => r.business_id))]
+        const { data: rows } = await buildBase().in('id', ids).limit(50) as { data: Business[] | null }
+        results = rows ?? []
+      }
     }
   } else {
     // No query — list mode (newest first, respecting filters)
