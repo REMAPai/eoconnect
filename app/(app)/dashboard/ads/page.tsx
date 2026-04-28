@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { redirect, notFound } from 'next/navigation'
+import { ADS_ENABLED } from '@/lib/feature-flags'
 import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Megaphone, Plus, BarChart3, MousePointerClick, Eye } from 'lucide-react'
@@ -8,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 
 export default async function AdsListPage() {
+  if (!ADS_ENABLED) notFound()
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any

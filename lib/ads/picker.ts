@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateText, Output } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
+import { ADS_ENABLED } from '@/lib/feature-flags'
 
 /**
  * The smart ad picker.
@@ -66,6 +67,7 @@ const SCORE_CACHE = new Map<string, { ts: number; scores: Record<string, number>
 const SCORE_TTL_MS = 5 * 60 * 1000
 
 export async function pickAds(ctx: PickerContext): Promise<PickedAd[]> {
+  if (!ADS_ENABLED) return []
   const limit = ctx.limit ?? 2
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

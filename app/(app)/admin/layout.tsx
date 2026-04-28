@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Users, Tags, MessageSquareWarning, Building2, Megaphone } from 'lucide-react'
+import { ADS_ENABLED } from '@/lib/feature-flags'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -36,9 +37,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/reviews" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted">
             <MessageSquareWarning className="h-4 w-4" /> Flagged Reviews
           </Link>
-          <Link href="/admin/ads" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted">
-            <Megaphone className="h-4 w-4" /> Ad Approvals
-          </Link>
+          {ADS_ENABLED && (
+            <Link href="/admin/ads" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted">
+              <Megaphone className="h-4 w-4" /> Ad Approvals
+            </Link>
+          )}
           {isSuper && (
             <Link href="/admin/categories" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted">
               <Tags className="h-4 w-4" /> Categories

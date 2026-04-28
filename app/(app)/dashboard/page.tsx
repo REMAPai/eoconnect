@@ -4,6 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Eye, Search, MessageCircle, LayoutList, Inbox, Megaphone } from 'lucide-react'
+import { ADS_ENABLED } from '@/lib/feature-flags'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { AnalyticsChart } from '@/components/dashboard/analytics-chart'
 import { LeadProgress } from '@/components/dashboard/lead-progress'
@@ -103,7 +104,7 @@ export default async function DashboardPage() {
       <LeadProgress views={totalViews} contactClicks={totalContactClicks} />
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 ${ADS_ENABLED ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
         <Link href="/dashboard/listings" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
           <LayoutList className="w-5 h-5 text-muted-foreground mb-3" />
           <p className="text-sm text-muted-foreground">Manage</p>
@@ -114,11 +115,13 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted-foreground">Check</p>
           <p className="text-xl font-bold mt-0.5">Messages</p>
         </Link>
-        <Link href="/dashboard/ads" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
-          <Megaphone className="w-5 h-5 text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">Ad Campaigns</p>
-          <p className="text-xl font-bold mt-0.5">Promote</p>
-        </Link>
+        {ADS_ENABLED && (
+          <Link href="/dashboard/ads" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
+            <Megaphone className="w-5 h-5 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">Ad Campaigns</p>
+            <p className="text-xl font-bold mt-0.5">Promote</p>
+          </Link>
+        )}
       </div>
     </div>
   )

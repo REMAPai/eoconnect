@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { CampaignDetail } from '@/components/ads/campaign-detail'
+import { ADS_ENABLED } from '@/lib/feature-flags'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default async function CampaignDetailPage({ params, searchParams }: Props) {
+  if (!ADS_ENABLED) notFound()
   const { id } = await params
   const { payment } = await searchParams
   const supabase = await createClient()

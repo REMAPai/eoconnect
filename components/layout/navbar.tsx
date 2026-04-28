@@ -19,16 +19,19 @@ import { cn } from '@/lib/utils'
 interface NavbarProps {
   profile: Profile | null
   unreadMessages?: number
+  adsEnabled?: boolean
 }
 
-const navLinks = [
+const baseLinks = [
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/dashboard/messages', label: 'Messages' },
-  { href: '/dashboard/ads', label: 'Ads' },
-]
+] as const
 
-export function Navbar({ profile, unreadMessages = 0 }: NavbarProps) {
+export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: NavbarProps) {
+  const navLinks = adsEnabled
+    ? [...baseLinks, { href: '/dashboard/ads', label: 'Ads' }]
+    : baseLinks
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
 

@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
 import { AdsApprovalQueue } from '@/components/admin/ads-approval-queue'
+import { ADS_ENABLED } from '@/lib/feature-flags'
 
 export default async function AdminAdsPage() {
+  if (!ADS_ENABLED) notFound()
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
