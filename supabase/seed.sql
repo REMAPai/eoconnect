@@ -12,5 +12,15 @@ insert into public.categories (name, slug, icon, sort_order) values
   ('Construction & Trades',    'construction-trades',      '🔨', 11),
   ('Media & Entertainment',    'media-entertainment',      '🎬', 12),
   ('Logistics & Transport',    'logistics-transport',      '🚚', 13),
-  ('Food & Beverage',          'food-beverage',            '🍽️', 14)
+  ('Food & Beverage',          'food-beverage',            '🍽️', 14),
+  ('AI & Machine Learning',    'ai-machine-learning',      '🤖', 15),
+  ('Cybersecurity',            'cybersecurity',            '🔒', 16),
+  ('HR & Staffing',            'hr-staffing',              '👥', 17),
+  ('Legal Services',           'legal-services',           '⚖️', 18),
+  ('Consulting & Advisory',    'consulting-advisory',      '💼', 19),
+  ('Investment & Venture',     'investment-venture',       '📈', 20),
+  ('Environmental & Sustainability', 'environmental-sustainability', '🌱', 21),
+  ('SaaS & Software Products', 'saas-software-products',   '🖥️', 22),
+  ('Web & App Development',    'web-app-development',      '⚙️', 23),
+  ('Recruiting & Talent',      'recruiting-talent',        '🎯', 24)
 on conflict (slug) do nothing;

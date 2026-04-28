@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
-import Image from 'next/image'
 import { updateBusiness, type BusinessActionResult } from '@/actions/business'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -234,7 +233,7 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
               onClick={() => logoInputRef.current?.click()}
             >
               {logoPreview ? (
-                <Image src={logoPreview} alt="Logo preview" fill className="object-cover" />
+                <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center">
                   <Upload className="h-6 w-6 text-muted-foreground" />
@@ -249,7 +248,7 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
               >
                 {logoPreview ? 'Change logo' : 'Upload logo'}
               </button>
-              <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG up to 5MB</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG up to 5MB · Recommended: 400×400px</p>
               {logoPreview && logoPreview !== business.logo_url && (
                 <p className="text-xs text-primary mt-0.5">New file selected ✓</p>
               )}
@@ -277,7 +276,7 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
           >
             {coverPreview ? (
               <>
-                <Image src={coverPreview} alt="Cover preview" fill className="object-cover" />
+                <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <div className="flex items-center gap-2 text-white text-sm font-medium">
                     <Upload className="h-4 w-4" /> Change cover
@@ -314,7 +313,7 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
             <div className="grid grid-cols-3 gap-2 mb-2">
               {portfolioExisting.map((src, i) => (
                 <div key={`existing-${i}`} className="relative h-24 rounded-lg overflow-hidden border border-border group">
-                  <Image src={src} alt={`Portfolio ${i + 1}`} fill className="object-cover" />
+                  <img src={src} alt={`Portfolio ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeExistingPortfolio(i)}
@@ -326,7 +325,7 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
               ))}
               {portfolioNewPreviews.map((src, i) => (
                 <div key={`new-${i}`} className="relative h-24 rounded-lg overflow-hidden border border-primary/50 group">
-                  <Image src={src} alt={`New portfolio ${i + 1}`} fill className="object-cover" />
+                  <img src={src} alt={`New portfolio ${i + 1}`} className="w-full h-full object-cover" />
                   <span className="absolute bottom-1 left-1 text-xs bg-primary text-primary-foreground px-1 rounded">New</span>
                   <button
                     type="button"
