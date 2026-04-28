@@ -1,9 +1,12 @@
 import { Suspense } from 'react'
+import { after } from 'next/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/marketplace/search-bar'
 import { FilterPanel } from '@/components/marketplace/filter-panel'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { getEmbedding } from '@/lib/ai/embeddings'
+import { refreshBusinessEmbedding } from '@/lib/ai/refresh-business-embedding'
 import { pickAds } from '@/lib/ads/picker'
 import { SponsoredCard } from '@/components/marketplace/sponsored-card'
 import type { Business } from '@/types/database'
@@ -137,6 +140,33 @@ async function SearchResults({ searchParams }: SearchPageProps) {
         return biz ? { business: biz, campaignId: a.id } : null
       })
       .filter((x): x is { business: Business; campaignId: string } => x !== null)
+  }
+
+  // ── Self-healing search ──
+  // After the response is sent, populate embeddings for any business that
+  // doesn't have one yet. Uses the service-role client so it bypasses RLS
+  // and can update any row. Within a few searches all businesses end up
+  // embedded, and from then on every search hits the fast vector path.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.OPENAI_API_KEY) {
+    after(async () => {
+      try {
+        const admin = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const adminAny = admin as any
+        const { data: missing } = await adminAny.rpc('businesses_missing_embeddings', { batch_size: 10 }) as {
+          data: Array<{ id: string }> | null
+        }
+        for (const b of missing ?? []) {
+          try { await refreshBusinessEmbedding(adminAny, b.id) } catch (err) { console.error('embed', b.id, err) }
+        }
+      } catch (err) {
+        console.error('post-search backfill failed:', err)
+      }
+    })
   }
 
   return (
