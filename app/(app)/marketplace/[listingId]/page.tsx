@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Globe, Phone, Mail, Star, Calendar, Users } from 'lucide-react'
 import { startConversation } from '@/actions/messages'
+import { ReviewForm } from '@/components/reviews/review-form'
+import { ReplyForm } from '@/components/reviews/reply-form'
 import { cn } from '@/lib/utils'
 
 interface ListingDetailProps {
@@ -15,13 +16,14 @@ interface ListingDetailProps {
 export default async function ListingDetailPage({ params }: ListingDetailProps) {
   const { listingId } = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
 
   const [{ data: business }, { data: services }, { data: reviews }, { data: categories }] = await Promise.all([
     db.from('businesses').select('*, profiles!owner_id(full_name, avatar_url)').eq('id', listingId).eq('status', 'published').single(),
     db.from('services').select('*').eq('business_id', listingId).eq('status', 'published'),
-    db.from('reviews').select('*, profiles!reviewer_id(full_name, avatar_url)').eq('business_id', listingId).order('created_at', { ascending: false }),
+    db.from('reviews').select('*, profiles!reviewer_id(full_name, avatar_url)').eq('business_id', listingId).eq('flagged', false).order('created_at', { ascending: false }),
     supabase.from('categories').select('id, name').eq('active', true),
   ])
 
@@ -30,27 +32,42 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
   // fire-and-forget analytics
   db.rpc('increment_listing_stat', { p_business_id: listingId, p_stat: 'views' })
 
-  const avgRating = reviews?.length
-    ? reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviews.length
+  const reviewList = (reviews ?? []) as Array<{
+    id: string
+    reviewer_id: string
+    rating: number
+    body: string | null
+    owner_reply: string | null
+    profiles?: { full_name?: string }
+  }>
+
+  const avgRating = reviewList.length
+    ? reviewList.reduce((sum, r) => sum + r.rating, 0) / reviewList.length
     : null
 
   const businessCategories = (categories as Array<{ id: string; name: string }> | null)
     ?.filter(c => business.category_ids?.includes(c.id)) ?? []
+
+  const isOwner = user?.id === business.owner_id
+  const myReview = user ? reviewList.find(r => r.reviewer_id === user.id) : null
+  const portfolioUrls = (business.portfolio_urls ?? []) as string[]
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Cover + logo */}
       <div className="relative">
         {business.cover_url ? (
-          <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden">
-            <Image src={business.cover_url} alt={business.name} fill className="object-cover" />
+          <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden bg-muted">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={business.cover_url} alt={business.name} className="w-full h-full object-cover" />
           </div>
         ) : (
           <div className="h-48 md:h-64 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5" />
         )}
         <div className="absolute -bottom-8 left-6 h-24 w-24 rounded-xl border-2 border-border bg-card overflow-hidden shadow-md">
           {business.logo_url ? (
-            <Image src={business.logo_url} alt="logo" fill className="object-cover" />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={business.logo_url} alt="logo" className="w-full h-full object-cover" />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-primary/20">
               <span className="text-primary font-bold text-xl">{business.name.charAt(0)}</span>
@@ -79,7 +96,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
               <span className="flex items-center gap-1 text-sm">
                 <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                 <span className="font-semibold">{avgRating.toFixed(1)}</span>
-                <span className="text-muted-foreground">({reviews?.length} reviews)</span>
+                <span className="text-muted-foreground">({reviewList.length} reviews)</span>
               </span>
             )}
           </div>
@@ -100,16 +117,18 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
         {/* Sidebar CTA */}
         <div className="w-full md:w-72 flex-shrink-0 space-y-4">
           <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-            <form action={startConversation}>
-              <input type="hidden" name="business_id" value={business.id} />
-              <input type="hidden" name="owner_id" value={business.owner_id} />
-              <button
-                type="submit"
-                className={cn(buttonVariants(), 'w-full bg-primary text-primary-foreground font-bold')}
-              >
-                Send Inquiry
-              </button>
-            </form>
+            {!isOwner && (
+              <form action={startConversation}>
+                <input type="hidden" name="business_id" value={business.id} />
+                <input type="hidden" name="owner_id" value={business.owner_id} />
+                <button
+                  type="submit"
+                  className={cn(buttonVariants(), 'w-full bg-primary text-primary-foreground font-bold')}
+                >
+                  Send Inquiry
+                </button>
+              </form>
+            )}
 
             {business.website && (
               <a
@@ -152,6 +171,21 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
         </div>
       </div>
 
+      {/* Portfolio */}
+      {portfolioUrls.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold mb-4">Portfolio</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {portfolioUrls.map((url, i) => (
+              <div key={i} className="relative h-40 rounded-xl overflow-hidden bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`Portfolio ${i + 1}`} className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Services */}
       {services && services.length > 0 && (
         <section>
@@ -188,11 +222,18 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
       {/* Reviews */}
       <section>
         <h2 className="text-xl font-bold mb-4">
-          Reviews{reviews?.length ? ` (${reviews.length})` : ''}
+          Reviews{reviewList.length ? ` (${reviewList.length})` : ''}
         </h2>
-        {reviews && reviews.length > 0 ? (
+
+        {!isOwner && user && (
+          <div className="mb-6">
+            <ReviewForm businessId={business.id} existing={myReview ? { rating: myReview.rating, body: myReview.body } : null} />
+          </div>
+        )}
+
+        {reviewList.length > 0 ? (
           <div className="space-y-4">
-            {reviews.map((review: { id: string; rating: number; body?: string; owner_reply?: string; profiles?: { full_name?: string } }) => (
+            {reviewList.map(review => (
               <div key={review.id} className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
@@ -214,6 +255,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
                     <p className="text-sm text-muted-foreground">{review.owner_reply}</p>
                   </div>
                 )}
+                {isOwner && <ReplyForm reviewId={review.id} existing={review.owner_reply} />}
               </div>
             ))}
           </div>

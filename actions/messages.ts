@@ -2,12 +2,67 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 const ConversationSchema = z.object({
   owner_id: z.string().uuid('Invalid owner'),
   business_id: z.string().uuid('Invalid business'),
 })
+
+const MessageSchema = z.object({
+  conversation_id: z.string().uuid(),
+  body: z.string().trim().min(1, 'Message cannot be empty').max(5000),
+})
+
+export async function sendMessage(formData: FormData): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const parsed = MessageSchema.safeParse({
+    conversation_id: formData.get('conversation_id'),
+    body: formData.get('body'),
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const { data: conv } = await db
+    .from('conversations')
+    .select('participant_ids')
+    .eq('id', parsed.data.conversation_id)
+    .single()
+
+  if (!conv || !conv.participant_ids.includes(user.id)) {
+    return { error: 'Not a participant in this conversation' }
+  }
+
+  const { error } = await db.from('messages').insert({
+    conversation_id: parsed.data.conversation_id,
+    sender_id: user.id,
+    body: parsed.data.body,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/messages')
+  return { error: null }
+}
+
+export async function markMessagesRead(conversationId: string): Promise<void> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  await db
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('conversation_id', conversationId)
+    .neq('sender_id', user.id)
+    .is('read_at', null)
+}
 
 export async function startConversation(formData: FormData) {
   const supabase = await createClient()
