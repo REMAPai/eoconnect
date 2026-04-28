@@ -60,32 +60,34 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
   const parsed = BusinessSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  let logo_url: string | undefined
-  let cover_url: string | undefined
-
-  const logoFile = formData.get('logo') as File | null
-  const coverFile = formData.get('cover') as File | null
+  // Files now come in as URLs (uploaded directly to Supabase Storage from
+  // the client) — keeps the action body small enough for Vercel's ~4.5MB cap.
+  // Legacy File-object fallback still supported for older clients.
+  let logo_url: string | undefined = (formData.get('logo_url') as string | null) ?? undefined
+  let cover_url: string | undefined = (formData.get('cover_url') as string | null) ?? undefined
 
   try {
-    if (logoFile && logoFile.size > 0) {
+    const logoFile = formData.get('logo') as File | null
+    const coverFile = formData.get('cover') as File | null
+
+    if (!logo_url && logoFile && logoFile.size > 0) {
       logo_url = await uploadFile('eoconnect-media', `logos/${user.id}-${Date.now()}`, logoFile)
     }
-    if (coverFile && coverFile.size > 0) {
+    if (!cover_url && coverFile && coverFile.size > 0) {
       cover_url = await uploadFile('eoconnect-media', `covers/${user.id}-${Date.now()}`, coverFile)
     }
 
-    const portfolioFiles = formData.getAll('portfolio') as File[]
-    const portfolio_urls: string[] = []
-    for (const file of portfolioFiles.slice(0, 5)) {
-      if (file.size > 0) {
-        // Preserve a sanitized version of the original filename so
-        // viewers see "Brand_Strategy_Deck.pdf" instead of an opaque hash.
-        const safeName = file.name
-          .toLowerCase()
-          .replace(/[^a-z0-9.-]/g, '_')
-          .slice(0, 80) || 'document.pdf'
-        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}/${Date.now()}-${safeName}`, file)
-        portfolio_urls.push(url)
+    // Portfolio: prefer URL strings (direct upload). Fall back to File objects.
+    const portfolioUrls = formData.getAll('portfolio_url') as string[]
+    const portfolio_urls: string[] = portfolioUrls.slice(0, 5)
+    if (portfolio_urls.length === 0) {
+      const portfolioFiles = formData.getAll('portfolio') as File[]
+      for (const file of portfolioFiles.slice(0, 5)) {
+        if (file.size > 0) {
+          const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '_').slice(0, 80) || 'document.pdf'
+          const url = await uploadFile('eoconnect-media', `portfolio/${user.id}/${Date.now()}-${safeName}`, file)
+          portfolio_urls.push(url)
+        }
       }
     }
 
@@ -190,31 +192,32 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
   const parsed = BusinessSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  let logo_url: string | undefined
-  let cover_url: string | undefined
+  // URL strings preferred (direct client upload). File-object fallback kept
+  // for backward compat with stale clients.
+  let logo_url: string | undefined = (formData.get('logo_url') as string | null) ?? undefined
+  let cover_url: string | undefined = (formData.get('cover_url') as string | null) ?? undefined
 
   try {
     const logoFile = formData.get('logo') as File | null
     const coverFile = formData.get('cover') as File | null
 
-    if (logoFile && logoFile.size > 0) {
+    if (!logo_url && logoFile && logoFile.size > 0) {
       logo_url = await uploadFile('eoconnect-media', `logos/${user.id}-${Date.now()}`, logoFile)
     }
-    if (coverFile && coverFile.size > 0) {
+    if (!cover_url && coverFile && coverFile.size > 0) {
       cover_url = await uploadFile('eoconnect-media', `covers/${user.id}-${Date.now()}`, coverFile)
     }
 
-    const portfolioNewFiles = formData.getAll('portfolio') as File[]
     const portfolioKeep = formData.getAll('portfolio_keep') as string[]
-    const newPortfolioUrls: string[] = []
-    for (const file of portfolioNewFiles.slice(0, 5)) {
-      if (file.size > 0) {
-        const safeName = file.name
-          .toLowerCase()
-          .replace(/[^a-z0-9.-]/g, '_')
-          .slice(0, 80) || 'document.pdf'
-        const url = await uploadFile('eoconnect-media', `portfolio/${user.id}/${Date.now()}-${safeName}`, file)
-        newPortfolioUrls.push(url)
+    const newPortfolioUrls: string[] = formData.getAll('portfolio_url') as string[]
+    if (newPortfolioUrls.length === 0) {
+      const portfolioNewFiles = formData.getAll('portfolio') as File[]
+      for (const file of portfolioNewFiles.slice(0, 5)) {
+        if (file.size > 0) {
+          const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '_').slice(0, 80) || 'document.pdf'
+          const url = await uploadFile('eoconnect-media', `portfolio/${user.id}/${Date.now()}-${safeName}`, file)
+          newPortfolioUrls.push(url)
+        }
       }
     }
     const portfolio_urls = [...portfolioKeep, ...newPortfolioUrls].slice(0, 5)

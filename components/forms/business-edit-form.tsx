@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { updateBusiness, type BusinessActionResult } from '@/actions/business'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -84,11 +85,51 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
     e.preventDefault()
     setError(null)
     setSuccess(false)
-    const fd = new FormData(e.currentTarget)
-    formData.category_ids.forEach(id => fd.append('category_ids', id))
-    portfolioFiles.forEach(f => fd.append('portfolio', f))
-    portfolioExisting.forEach(url => fd.append('portfolio_keep', url))
+    const formEl = e.currentTarget
+
     startTransition(async () => {
+      // All files (logo / cover / portfolio) upload directly to Supabase
+      // Storage so the form body fits Vercel's ~4.5MB function cap.
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setError('Please sign in again to upload files'); return }
+
+      const uploadFile = async (file: File, folder: string): Promise<string> => {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '_').slice(0, 80) || 'file'
+        const path = `${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`
+        const { error: uploadErr } = await supabase.storage.from('eoconnect-media').upload(path, file)
+        if (uploadErr) throw new Error(`Failed to upload ${file.name}: ${uploadErr.message}`)
+        return supabase.storage.from('eoconnect-media').getPublicUrl(path).data.publicUrl
+      }
+
+      // Pull selected logo/cover File objects via the input refs.
+      const logoFile = logoInputRef.current?.files?.[0]
+      const coverFile = coverInputRef.current?.files?.[0]
+
+      let logo_url: string | undefined
+      let cover_url: string | undefined
+      let newPortfolioUrls: string[] = []
+      try {
+        const [logoUploaded, coverUploaded, portfolioUploaded] = await Promise.all([
+          logoFile ? uploadFile(logoFile, 'logos') : Promise.resolve(undefined),
+          coverFile ? uploadFile(coverFile, 'covers') : Promise.resolve(undefined),
+          Promise.all(portfolioFiles.map(f => uploadFile(f, 'portfolio'))),
+        ])
+        logo_url = logoUploaded
+        cover_url = coverUploaded
+        newPortfolioUrls = portfolioUploaded
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'File upload failed')
+        return
+      }
+
+      const fd = new FormData(formEl)
+      formData.category_ids.forEach(id => fd.append('category_ids', id))
+      if (logo_url) fd.set('logo_url', logo_url)
+      if (cover_url) fd.set('cover_url', cover_url)
+      newPortfolioUrls.forEach(url => fd.append('portfolio_url', url))
+      portfolioExisting.forEach(url => fd.append('portfolio_keep', url))
+
       const result: BusinessActionResult = await updateBusiness(business.id, fd)
       if (result?.error) {
         setError(result.error)

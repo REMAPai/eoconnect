@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { createBusiness } from '@/actions/business'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -89,13 +90,48 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
-    const fd = new FormData(e.currentTarget)
-    formData.category_ids.forEach(id => fd.append('category_ids', id))
-    if (logoFile) fd.set('logo', logoFile)
-    if (coverFile) fd.set('cover', coverFile)
-    portfolioFiles.forEach(f => fd.append('portfolio', f))
-    if (formData.custom_categories.trim()) fd.set('custom_categories', formData.custom_categories)
+    const formEl = e.currentTarget
+
     startTransition(async () => {
+      // Every file goes directly from the browser → Supabase Storage so
+      // the multipart form body stays well under Vercel's ~4.5MB function
+      // ceiling. Server action only receives the public URLs as strings.
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setError('Please sign in again to upload files'); return }
+
+      const uploadFile = async (file: File, folder: string): Promise<string> => {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '_').slice(0, 80) || `file`
+        const path = `${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`
+        const { error: uploadErr } = await supabase.storage.from('eoconnect-media').upload(path, file)
+        if (uploadErr) throw new Error(`Failed to upload ${file.name}: ${uploadErr.message}`)
+        return supabase.storage.from('eoconnect-media').getPublicUrl(path).data.publicUrl
+      }
+
+      let logo_url: string | undefined
+      let cover_url: string | undefined
+      let portfolio_urls: string[] = []
+      try {
+        const [logoUploaded, coverUploaded, portfolioUploaded] = await Promise.all([
+          logoFile ? uploadFile(logoFile, 'logos') : Promise.resolve(undefined),
+          coverFile ? uploadFile(coverFile, 'covers') : Promise.resolve(undefined),
+          Promise.all(portfolioFiles.map(f => uploadFile(f, 'portfolio'))),
+        ])
+        logo_url = logoUploaded
+        cover_url = coverUploaded
+        portfolio_urls = portfolioUploaded
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'File upload failed')
+        return
+      }
+
+      const fd = new FormData(formEl)
+      formData.category_ids.forEach(id => fd.append('category_ids', id))
+      if (logo_url) fd.set('logo_url', logo_url)
+      if (cover_url) fd.set('cover_url', cover_url)
+      portfolio_urls.forEach(url => fd.append('portfolio_url', url))
+      if (formData.custom_categories.trim()) fd.set('custom_categories', formData.custom_categories)
+
       const result = await createBusiness(fd)
       if (result?.error) setError(result.error)
     })
@@ -122,7 +158,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
     }
     if (n === 2) {
       if (!formData.email.trim()) return 'Business email is required'
-      if (!formData.phone.trim()) return 'Phone is required'
+      // Phone is optional — many businesses don't want their direct line public.
     }
     if (n === 3) {
       if (!logoFile) return 'Logo is required'
@@ -244,8 +280,8 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
               <Input id="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="hello@yourcompany.com" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone *</Label>
-              <Input id="phone" value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="+44 20 7946 0958" required />
+              <Label htmlFor="phone">Phone <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+              <Input id="phone" value={formData.phone} onChange={e => update('phone', e.target.value)} placeholder="+44 20 7946 0958" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="social_linkedin">LinkedIn</Label>
