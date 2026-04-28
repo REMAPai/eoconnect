@@ -18,11 +18,17 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: business } = await db
+  // Members can now own multiple businesses (migration 007). maybeSingle()
+  // would return null when >1 row exists, so the dashboard would show the
+  // 'no business yet' empty state for any user with 2+ businesses. Pick the
+  // most recently created one for the analytics surface.
+  const { data: businesses } = await db
     .from('businesses')
     .select('id, name, status')
     .eq('owner_id', user.id)
-    .maybeSingle() as { data: { id: string; name: string; status: string } | null }
+    .order('created_at', { ascending: false })
+    .limit(1) as { data: Array<{ id: string; name: string; status: string }> | null }
+  const business = businesses?.[0] ?? null
 
   // Fetch conversations where user is a participant
   const { data: conversations } = await db

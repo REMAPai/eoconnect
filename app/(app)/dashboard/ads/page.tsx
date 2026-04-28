@@ -16,10 +16,13 @@ export default async function AdsListPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: business } = await db
-    .from('businesses').select('id, name, status').eq('owner_id', user.id).maybeSingle() as {
-      data: { id: string; name: string; status: string } | null
+  // Members can own multiple businesses — pick the most recent for ad scope.
+  const { data: businesses } = await db
+    .from('businesses').select('id, name, status').eq('owner_id', user.id)
+    .order('created_at', { ascending: false }).limit(1) as {
+      data: Array<{ id: string; name: string; status: string }> | null
     }
+  const business = businesses?.[0] ?? null
 
   if (!business) {
     return (

@@ -12,10 +12,12 @@ export default async function NewCampaignPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: business }, { data: categories }] = await Promise.all([
-    db.from('businesses').select('id, name, status, category_ids, tags').eq('owner_id', user.id).maybeSingle(),
+  const [{ data: businessRows }, { data: categories }] = await Promise.all([
+    db.from('businesses').select('id, name, status, category_ids, tags').eq('owner_id', user.id)
+      .order('created_at', { ascending: false }).limit(1),
     db.from('categories').select('*').eq('active', true).order('sort_order'),
   ])
+  const business = (businessRows as Array<{ id: string; name: string; status: string; category_ids: string[]; tags: string[] }> | null)?.[0] ?? null
 
   if (!business) redirect('/dashboard/business/new')
   if (business.status !== 'published') redirect('/dashboard/listings')
