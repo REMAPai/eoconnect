@@ -18,7 +18,29 @@ import type { Category } from '@/types/database'
 // Per-category images. Files live in /public/images/categories/<slug>.jpg
 // Add a slug here only when the matching file is committed.
 const CATEGORY_IMAGES: Record<string, string> = {
-  'ai-machine-learning': '/images/categories/ai-machine-learning.jpg',
+  'ai-machine-learning':            '/images/categories/ai-machine-learning.jpg',
+  'technology-software':            '/images/categories/technology-software.jpg',
+  'web-app-development':            '/images/categories/web-app-development.jpg',
+  'cybersecurity':                  '/images/categories/cybersecurity.jpg',
+  'saas-software-products':         '/images/categories/saas-software-products.jpg',
+  'legal-services':                 '/images/categories/legal-services.jpg',
+  'consulting-advisory':            '/images/categories/consulting-advisory.jpg',
+  'financial-services':             '/images/categories/financial-services.jpg',
+  'investment-venture':             '/images/categories/investment-venture.jpg',
+  'marketing-creative':             '/images/categories/marketing-creative.jpg',
+  'media-entertainment':            '/images/categories/media-entertainment.jpg',
+  'real-estate-property':           '/images/categories/real-estate-property.jpg',
+  'manufacturing-industry':         '/images/categories/manufacturing-industry.jpg',
+  'construction-trades':            '/images/categories/construction-trades.jpg',
+  'logistics-transport':            '/images/categories/logistics-transport.jpg',
+  'health-wellness':                '/images/categories/health-wellness.jpg',
+  'education-training':             '/images/categories/education-training.jpg',
+  'retail-ecommerce':               '/images/categories/retail-ecommerce.jpg',
+  'hospitality-events':             '/images/categories/hospitality-events.jpg',
+  'food-beverage':                  '/images/categories/food-beverage.jpg',
+  'hr-staffing':                    '/images/categories/hr-staffing.jpg',
+  'recruiting-talent':              '/images/categories/recruiting-talent.jpg',
+  'environmental-sustainability':   '/images/categories/environmental-sustainability.jpg',
 }
 
 // Per-category one-liners for the hero & medium cards.
