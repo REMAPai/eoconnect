@@ -232,7 +232,7 @@ async function computeSemanticScores(
     ).join('\n')
 
     const { output } = await generateText({
-      model: openai('gpt-5.4-mini'),
+      model: openai('gpt-5-nano'),
       output: Output.object({ schema: SemanticScoreSchema }),
       prompt: `You are scoring how well advertisers' campaigns match a user's current search.
 
