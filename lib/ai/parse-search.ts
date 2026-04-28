@@ -5,16 +5,18 @@ import type { Category } from '@/types/database'
 
 export interface ParsedSearch {
   categorySlugs: string[]
-  city?: string
-  country?: string
-  keywords?: string
+  city: string | null
+  country: string | null
+  keywords: string | null
 }
 
+// OpenAI's strict structured-output mode requires every field to be in `required`,
+// so we use .nullable() instead of .optional() and treat null as "not extracted".
 const ParsedSearchSchema = z.object({
-  categorySlugs: z.array(z.string()).describe('Matching category slugs from the provided list (exact slug strings)'),
-  city: z.string().optional().describe('City name if the query mentions a city, lowercase'),
-  country: z.string().optional().describe('Country name if mentioned, in title case'),
-  keywords: z.string().optional().describe('Remaining descriptive terms for full-text search after removing category and location words'),
+  categorySlugs: z.array(z.string()).describe('Matching category slugs from the provided list (exact slug strings). Empty array if none match.'),
+  city: z.string().nullable().describe('City name if the query mentions a city (lowercase). null if not mentioned.'),
+  country: z.string().nullable().describe('Country name if mentioned (title case). null if not mentioned.'),
+  keywords: z.string().nullable().describe('Remaining descriptive terms for full-text search after removing category and location words. null if no remaining terms.'),
 })
 
 export async function parseSearchQuery(
@@ -22,7 +24,7 @@ export async function parseSearchQuery(
   categories: Pick<Category, 'slug' | 'name'>[]
 ): Promise<ParsedSearch> {
   if (!process.env.OPENAI_API_KEY) {
-    return { categorySlugs: [], keywords: query }
+    return { categorySlugs: [], city: null, country: null, keywords: query }
   }
 
   try {
@@ -48,6 +50,6 @@ Rules:
     return output
   } catch (err) {
     console.error('parseSearchQuery failed:', err)
-    return { categorySlugs: [], keywords: query }
+    return { categorySlugs: [], city: null, country: null, keywords: query }
   }
 }
