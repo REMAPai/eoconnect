@@ -44,6 +44,15 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith('/admin')) {
+    // TEMP DEBUG — surface the actual gate decision so we can see why a
+    // super_admin user is being redirected. Will remove once diagnosed.
+    console.log('[admin-gate]', JSON.stringify({
+      user_id: user.id,
+      user_email: user.email,
+      profile_role: profile?.role ?? null,
+      profile_status: profile?.status ?? null,
+      profile_is_null: !profile,
+    }))
     if (!profile || !['chapter_admin', 'super_admin'].includes(profile.role)) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
