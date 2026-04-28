@@ -80,7 +80,7 @@ export default async function DashboardPage() {
   }))
 
   const providerView = (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <div>
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         <Badge variant="secondary" className="capitalize ml-auto">{business.status}</Badge>
       </div>
 
-      {/* Primary actions — always visible (MM-11, MM-12) */}
+      {/* Profile / business management actions (MM-11, MM-12) */}
       <div className="flex flex-wrap gap-2">
         <Link
           href="/dashboard/account"
@@ -118,39 +118,42 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatsCard label="Views" value={totalViews} icon={<Eye className="w-5 h-5" />} />
-        <StatsCard label="Search Appearances" value={totalSearchAppearances} icon={<Search className="w-5 h-5" />} />
-        <StatsCard label="Inquiries" value={totalContactClicks} icon={<MessageCircle className="w-5 h-5" />} />
-      </div>
-
-      {/* Chart */}
-      <AnalyticsChart data={chartData} />
-
-      {/* Lead progress */}
-      <LeadProgress views={totalViews} contactClicks={totalContactClicks} />
-
-      {/* Quick actions */}
+      {/* MM-10: Manage Listings + Messages promoted above analytics */}
       <div className={`grid grid-cols-1 ${ADS_ENABLED ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
         <Link href="/dashboard/listings" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
-          <LayoutList className="w-5 h-5 text-muted-foreground mb-3" />
+          <LayoutList className="w-5 h-5 text-primary mb-3" />
           <p className="text-sm text-muted-foreground">Manage</p>
           <p className="text-xl font-bold mt-0.5">Listings</p>
         </Link>
         <Link href="/dashboard/messages" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
-          <Inbox className="w-5 h-5 text-muted-foreground mb-3" />
+          <Inbox className="w-5 h-5 text-primary mb-3" />
           <p className="text-sm text-muted-foreground">Check</p>
           <p className="text-xl font-bold mt-0.5">Messages</p>
         </Link>
         {ADS_ENABLED && (
           <Link href="/dashboard/ads" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
-            <Megaphone className="w-5 h-5 text-muted-foreground mb-3" />
+            <Megaphone className="w-5 h-5 text-primary mb-3" />
             <p className="text-sm text-muted-foreground">Ad Campaigns</p>
             <p className="text-xl font-bold mt-0.5">Promote</p>
           </Link>
         )}
       </div>
+
+      {/* Analytics — secondary, below the fold */}
+      <section className="space-y-4 pt-4 border-t border-border">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Analytics · last 30 days
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatsCard label="Views" value={totalViews} icon={<Eye className="w-5 h-5" />} />
+          <StatsCard label="Search Appearances" value={totalSearchAppearances} icon={<Search className="w-5 h-5" />} />
+          <StatsCard label="Inquiries" value={totalContactClicks} icon={<MessageCircle className="w-5 h-5" />} />
+        </div>
+        <AnalyticsChart data={chartData} />
+        <LeadProgress views={totalViews} contactClicks={totalContactClicks} />
+      </section>
     </div>
   )
 
