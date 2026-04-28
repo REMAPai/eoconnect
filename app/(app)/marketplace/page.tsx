@@ -2,9 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/marketplace/search-bar'
 import { CategoryGrid } from '@/components/marketplace/category-grid'
 import { ListingCard } from '@/components/marketplace/listing-card'
+import { SponsoredCard } from '@/components/marketplace/sponsored-card'
+import { pickAds } from '@/lib/ads/picker'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import type { Business } from '@/types/database'
 
 export default async function MarketplacePage() {
   const supabase = await createClient()
@@ -19,6 +22,15 @@ export default async function MarketplacePage() {
       .order('created_at', { ascending: false })
       .limit(8),
   ])
+
+  // One sponsored slot at position 0 of "Recently Listed"
+  const recentBusinessIds = (recent ?? []).map((b: Business) => b.id)
+  const ads = await pickAds({ page: 'marketplace', limit: 1, excludeBusinessIds: recentBusinessIds })
+  let sponsored: { business: Business; campaignId: string } | null = null
+  if (ads.length > 0) {
+    const { data: bizRows } = await db.from('businesses').select('*').eq('id', ads[0].business_id).maybeSingle() as { data: Business | null }
+    if (bizRows) sponsored = { business: bizRows, campaignId: ads[0].id }
+  }
 
   return (
     <div className="space-y-12">
@@ -63,6 +75,13 @@ export default async function MarketplacePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {sponsored && (
+              <SponsoredCard
+                business={sponsored.business}
+                campaignId={sponsored.campaignId}
+                page="marketplace"
+              />
+            )}
             {recent.map((b: Parameters<typeof ListingCard>[0]['business']) => (
               <ListingCard key={b.id} business={b} />
             ))}

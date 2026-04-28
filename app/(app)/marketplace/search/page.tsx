@@ -4,7 +4,10 @@ import { SearchBar } from '@/components/marketplace/search-bar'
 import { FilterPanel } from '@/components/marketplace/filter-panel'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { parseSearchQuery } from '@/lib/ai/parse-search'
+import { pickAds } from '@/lib/ads/picker'
+import { SponsoredCard } from '@/components/marketplace/sponsored-card'
 import { Sparkles } from 'lucide-react'
+import type { Business } from '@/types/database'
 
 type SearchParams = {
   q?: string
@@ -75,6 +78,34 @@ async function SearchResults({ searchParams }: SearchPageProps) {
 
   const { data: results } = await query.limit(50)
 
+  // Pick sponsored ads to inject. Excludes the businesses that already appear organically.
+  const organicBusinessIds = (results ?? []).map((b: Business) => b.id)
+  const ads = await pickAds({
+    query: params.q,
+    categoryIds: parsed?.categorySlugs?.length
+      ? categories?.filter((c: { slug: string; id: string }) => parsed.categorySlugs.includes(c.slug)).map((c: { id: string }) => c.id) ?? []
+      : (allSlugs.length > 0
+        ? categories?.filter((c: { slug: string; id: string }) => allSlugs.includes(c.slug)).map((c: { id: string }) => c.id) ?? []
+        : []),
+    city: parsed?.city ?? params.city ?? null,
+    country: parsed?.country ?? params.country ?? null,
+    page: 'search',
+    limit: 2,
+    excludeBusinessIds: organicBusinessIds,
+  })
+
+  // Fetch full business rows for sponsored ads
+  let sponsoredBusinesses: Array<{ business: Business; campaignId: string }> = []
+  if (ads.length > 0) {
+    const { data: bizRows } = await db.from('businesses').select('*').in('id', ads.map(a => a.business_id)) as { data: Business[] | null }
+    sponsoredBusinesses = ads
+      .map(a => {
+        const biz = (bizRows ?? []).find(b => b.id === a.business_id)
+        return biz ? { business: biz, campaignId: a.id } : null
+      })
+      .filter((x): x is { business: Business; campaignId: string } => x !== null)
+  }
+
   return (
     <div className="flex gap-8">
       <aside className="hidden lg:block w-56 flex-shrink-0">
@@ -108,9 +139,40 @@ async function SearchResults({ searchParams }: SearchPageProps) {
         </div>
         {results && results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {results.map((b: Parameters<typeof ListingCard>[0]['business']) => (
-              <ListingCard key={b.id} business={b} />
-            ))}
+            {/* Sponsored injection: first ad at position 0, second ad at position 4 */}
+            {(() => {
+              const cards: React.ReactNode[] = []
+              const organic = results as Business[]
+              let organicIdx = 0
+              for (let pos = 0; pos < organic.length + sponsoredBusinesses.length; pos++) {
+                if (pos === 0 && sponsoredBusinesses[0]) {
+                  cards.push(
+                    <SponsoredCard
+                      key={`spon-${sponsoredBusinesses[0].campaignId}`}
+                      business={sponsoredBusinesses[0].business}
+                      campaignId={sponsoredBusinesses[0].campaignId}
+                      query={params.q}
+                      page="search"
+                    />
+                  )
+                } else if (pos === 4 && sponsoredBusinesses[1]) {
+                  cards.push(
+                    <SponsoredCard
+                      key={`spon-${sponsoredBusinesses[1].campaignId}`}
+                      business={sponsoredBusinesses[1].business}
+                      campaignId={sponsoredBusinesses[1].campaignId}
+                      query={params.q}
+                      page="search"
+                    />
+                  )
+                } else if (organic[organicIdx]) {
+                  const b = organic[organicIdx]
+                  cards.push(<ListingCard key={b.id} business={b} />)
+                  organicIdx++
+                }
+              }
+              return cards
+            })()}
           </div>
         ) : (
           <div className="text-center py-16">

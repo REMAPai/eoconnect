@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { sendEmail, newReviewEmail } from '@/lib/email/send'
 
 const ReviewSchema = z.object({
   business_id: z.string().uuid(),
@@ -40,6 +41,29 @@ export async function submitReview(formData: FormData): Promise<{ error: string 
   )
 
   if (error) return { error: error.message }
+
+  // Fire-and-forget email to the business owner
+  void (async () => {
+    try {
+      const { data: biz } = await db.from('businesses').select('name, owner_id').eq('id', parsed.data.business_id).single() as {
+        data: { name: string; owner_id: string } | null
+      }
+      if (!biz) return
+      const { data: owner } = await db.from('profiles').select('eo_membership_email').eq('id', biz.owner_id).single() as {
+        data: { eo_membership_email: string | null } | null
+      }
+      const { data: reviewer } = await db.from('profiles').select('full_name').eq('id', user.id).single() as {
+        data: { full_name: string } | null
+      }
+      if (!owner?.eo_membership_email) return
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+      const tpl = newReviewEmail(reviewer?.full_name ?? 'A member', biz.name, parsed.data.rating, parsed.data.body, siteUrl, parsed.data.business_id)
+      await sendEmail({ to: owner.eo_membership_email, subject: tpl.subject, html: tpl.html })
+    } catch (err) {
+      console.error('review email failed:', err)
+    }
+  })()
+
   revalidatePath(`/marketplace/${parsed.data.business_id}`)
   return { error: null }
 }

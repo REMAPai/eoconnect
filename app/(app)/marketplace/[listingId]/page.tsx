@@ -29,8 +29,11 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
 
   if (!business) notFound()
 
-  // fire-and-forget analytics
+  // fire-and-forget analytics + ad personalization
   db.rpc('increment_listing_stat', { p_business_id: listingId, p_stat: 'views' })
+  if (user && business.category_ids?.length > 0) {
+    db.rpc('increment_user_category_view', { p_category_ids: business.category_ids })
+  }
 
   const reviewList = (reviews ?? []) as Array<{
     id: string

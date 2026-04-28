@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { sendEmail, newMessageEmail } from '@/lib/email/send'
 
 const ConversationSchema = z.object({
   owner_id: z.string().uuid('Invalid owner'),
@@ -45,6 +46,34 @@ export async function sendMessage(formData: FormData): Promise<{ error: string |
   })
 
   if (error) return { error: error.message }
+
+  // Fire-and-forget email to the other participant
+  void (async () => {
+    try {
+      const otherIds = (conv.participant_ids as string[]).filter((id: string) => id !== user.id)
+      if (otherIds.length === 0) return
+      const { data: senderProfile } = await db.from('profiles').select('full_name').eq('id', user.id).single()
+      const { data: recipient } = await db
+        .from('profiles')
+        .select('eo_membership_email, full_name')
+        .eq('id', otherIds[0])
+        .single() as { data: { eo_membership_email: string | null; full_name: string } | null }
+      if (!recipient?.eo_membership_email) return
+
+      let businessName: string | null = null
+      const { data: convRow } = await db.from('conversations').select('listing_id').eq('id', parsed.data.conversation_id).single()
+      if (convRow?.listing_id) {
+        const { data: biz } = await db.from('businesses').select('name').eq('id', convRow.listing_id).single()
+        businessName = biz?.name ?? null
+      }
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+      const tpl = newMessageEmail(senderProfile?.full_name ?? 'Someone', businessName, parsed.data.body.slice(0, 200), siteUrl, parsed.data.conversation_id)
+      await sendEmail({ to: recipient.eo_membership_email, subject: tpl.subject, html: tpl.html })
+    } catch (err) {
+      console.error('email send failed:', err)
+    }
+  })()
+
   revalidatePath('/dashboard/messages')
   return { error: null }
 }

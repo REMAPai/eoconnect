@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { sendEmail, welcomeEmail } from '@/lib/email/send'
 
 const SignUpSchema = z.object({
   fullName: z.string().min(2, 'Full name required'),
@@ -41,6 +42,14 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   })
 
   if (error) return { error: error.message }
+
+  // Fire-and-forget welcome email (Supabase will send the verification email separately)
+  void sendEmail({
+    to: parsed.data.email,
+    subject: 'Welcome to TABFT',
+    html: welcomeEmail(parsed.data.fullName, process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  })
+
   redirect('/verify')
 }
 
