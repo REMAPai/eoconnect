@@ -7,6 +7,7 @@ import { FilterPanel } from '@/components/marketplace/filter-panel'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { getEmbedding } from '@/lib/ai/embeddings'
 import { refreshBusinessEmbedding } from '@/lib/ai/refresh-business-embedding'
+import { parseSearchQuery } from '@/lib/ai/parse-search'
 import { pickAds } from '@/lib/ads/picker'
 import { SponsoredCard } from '@/components/marketplace/sponsored-card'
 import type { Business } from '@/types/database'
@@ -56,23 +57,51 @@ async function SearchResults({ searchParams }: SearchPageProps) {
   const tierCounts: Record<string, number> = {}
 
   if (queryText) {
+    // Parse the query with the AI to extract intent (categories + location).
+    // We use the parsed signal to filter vector results — without it, vector
+    // returns "any business that's vaguely Australian" for "real estate in
+    // australia". Stays null if no OPENAI_API_KEY or if AI is uncertain.
+    const parsed = categories ? await parseSearchQuery(queryText, categories) : null
+    const parsedCatIds: string[] = (parsed?.categorySlugs.length && categories)
+      ? categories.filter((c: { slug: string; id: string }) => parsed.categorySlugs.includes(c.slug)).map((c: { id: string }) => c.id)
+      : []
+    tierCounts.parsed_categories = parsedCatIds.length
+    tierCounts.parsed_city = parsed?.city ? 1 : 0
+    tierCounts.parsed_country = parsed?.country ? 1 : 0
+
     // ── Tier 1: Vector search (semantic) ──
-    const queryEmbedding = await getEmbedding(queryText)
+    // Embed the AI-extracted keywords (or full query as fallback) — focused
+    // text gives a tighter embedding than the raw user query.
+    const embeddingText = parsed?.keywords?.trim() || queryText
+    const queryEmbedding = await getEmbedding(embeddingText)
     tierCounts.embedding_ok = queryEmbedding ? 1 : 0
     if (queryEmbedding) {
       const { data: matches, error: rpcErr } = await db.rpc('search_businesses_by_embedding', {
         query_embedding: queryEmbedding,
         match_count: 50,
-        min_similarity: 0.20,
+        // Raised from 0.20 (which let "ai consultancy" match real estate
+        // searches because both are "Australian businesses"). 0.45 is a
+        // pragmatic threshold for text-embedding-3-small cosine distance.
+        min_similarity: 0.45,
       }) as { data: Array<{ id: string; similarity: number }> | null; error: { message: string } | null }
       if (rpcErr) tierCounts.vector_rpc_error = 1
-      tierCounts.tier1_vector = matches?.length ?? 0
+      tierCounts.tier1_vector_raw = matches?.length ?? 0
 
       if (matches && matches.length > 0) {
-        const ids = matches.map(m => m.id)
-        const { data: rows } = await buildBase().in('id', ids) as { data: Business[] | null }
+        const orderedIds = matches.map(m => m.id)
+        // Build the hydration query, layering AI-parsed filters on top of
+        // the user's URL-explicit ones (buildBase already handles URL ones).
+        let bizQuery = buildBase().in('id', orderedIds)
+        if (parsedCatIds.length > 0) {
+          bizQuery = bizQuery.overlaps('category_ids', parsedCatIds)
+        }
+        if (parsed?.city) bizQuery = bizQuery.ilike('city', `%${parsed.city}%`)
+        if (parsed?.country) bizQuery = bizQuery.ilike('country', `%${parsed.country}%`)
+
+        const { data: rows } = await bizQuery as { data: Business[] | null }
         const byId = new Map((rows ?? []).map(r => [r.id, r]))
-        results = matches.map(m => byId.get(m.id)).filter((b): b is Business => !!b)
+        results = orderedIds.map(id => byId.get(id)).filter((b): b is Business => !!b)
+        tierCounts.tier1_vector_filtered = results.length
       }
     }
 
