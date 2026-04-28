@@ -309,7 +309,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                 </div>
               )}
               {portfolioFiles.length < 5 && (
-                <label
+                <div
                   className="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors"
                   onClick={() => portfolioInputRef.current?.click()}
                 >
@@ -317,7 +317,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                   <span className="text-sm text-muted-foreground">
                     {portfolioFiles.length > 0 ? `Add more (${5 - portfolioFiles.length} remaining)` : 'Upload portfolio images'}
                   </span>
-                </label>
+                </div>
               )}
               <input ref={portfolioInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePortfolioChange} />
             </div>
