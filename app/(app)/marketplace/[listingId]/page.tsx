@@ -3,11 +3,40 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MapPin, Globe, Phone, Mail, Star, Calendar, Users } from 'lucide-react'
+
+// Inline brand SVGs — Lucide 1.x dropped brand icons into a separate package.
+const LinkedinIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M19 0H5a5 5 0 0 0-5 5v14a5 5 0 0 0 5 5h14a5 5 0 0 0 5-5V5a5 5 0 0 0-5-5zM8 19H5V8h3v11zM6.5 6.732c-.966 0-1.75-.79-1.75-1.766s.784-1.766 1.75-1.766 1.75.79 1.75 1.766-.783 1.766-1.75 1.766zM20 19h-3v-5.604c0-3.368-4-3.113-4 0V19h-3V8h3v1.765c1.396-2.586 7-2.777 7 2.476V19z"/>
+  </svg>
+)
+const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+)
+const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849s-.012 3.584-.069 4.849c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+  </svg>
+)
+const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+)
 import { startConversation } from '@/actions/messages'
 import { ReviewForm } from '@/components/reviews/review-form'
 import { ReplyForm } from '@/components/reviews/reply-form'
 import { cn } from '@/lib/utils'
+
+const MEMBERSHIP_LABEL: Record<string, string> = {
+  current_member: 'Current EO Member',
+  alumni: 'EO Alumni',
+  accelerator: 'EO Accelerator',
+}
 
 interface ListingDetailProps {
   params: Promise<{ listingId: string }>
@@ -21,7 +50,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
   const db = supabase as any
 
   const [{ data: business }, { data: services }, { data: reviews }, { data: categories }] = await Promise.all([
-    db.from('businesses').select('*, profiles!owner_id(full_name, avatar_url)').eq('id', listingId).eq('status', 'published').single(),
+    db.from('businesses').select('*, profiles!owner_id(full_name, avatar_url, eo_chapter, eo_membership_type)').eq('id', listingId).eq('status', 'published').single(),
     db.from('services').select('*').eq('business_id', listingId).eq('status', 'published'),
     db.from('reviews').select('*, profiles!reviewer_id(full_name, avatar_url)').eq('business_id', listingId).eq('flagged', false).order('created_at', { ascending: false }),
     supabase.from('categories').select('id, name').eq('active', true),
@@ -170,7 +199,62 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
                 </div>
               )}
             </div>
+
+            {/* Social icons — only render those that are populated */}
+            {business.social_links && (() => {
+              const socials = business.social_links as Record<string, string>
+              const items: Array<{ key: string; url: string; Icon: (p: React.SVGProps<SVGSVGElement>) => React.JSX.Element; label: string }> = []
+              if (socials.linkedin) items.push({ key: 'linkedin', url: socials.linkedin, Icon: LinkedinIcon, label: 'LinkedIn' })
+              if (socials.twitter) items.push({ key: 'twitter', url: socials.twitter, Icon: TwitterIcon, label: 'X / Twitter' })
+              if (socials.instagram) items.push({ key: 'instagram', url: socials.instagram, Icon: InstagramIcon, label: 'Instagram' })
+              if (socials.facebook) items.push({ key: 'facebook', url: socials.facebook, Icon: FacebookIcon, label: 'Facebook' })
+              if (items.length === 0) return null
+              return (
+                <div className="pt-3 border-t border-border flex items-center gap-2">
+                  {items.map(s => (
+                    <a
+                      key={s.key}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={s.label}
+                      className="h-8 w-8 rounded-lg bg-muted hover:bg-primary/20 hover:text-primary text-muted-foreground flex items-center justify-center transition-colors"
+                    >
+                      <s.Icon className="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
+
+          {/* Listed by — owner card */}
+          {business.profiles && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">Listed by</p>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-11 w-11">
+                  <AvatarImage src={business.profiles.avatar_url ?? undefined} />
+                  <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold">
+                    {(business.profiles.full_name ?? '?').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{business.profiles.full_name}</p>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                    {business.profiles.eo_membership_type && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {MEMBERSHIP_LABEL[business.profiles.eo_membership_type] ?? business.profiles.eo_membership_type}
+                      </Badge>
+                    )}
+                    {business.profiles.eo_chapter && (
+                      <span className="text-xs text-muted-foreground">{business.profiles.eo_chapter}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

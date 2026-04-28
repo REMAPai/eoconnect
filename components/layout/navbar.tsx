@@ -86,13 +86,13 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link href="/dashboard/business/edit" className="flex items-center w-full">
+                <Link href="/dashboard/account" className="flex items-center w-full">
                   <User className="mr-2 h-4 w-4" />My Profile
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href="/dashboard/business/edit" className="flex items-center w-full">
-                  <Settings className="mr-2 h-4 w-4" />Settings
+                  <Settings className="mr-2 h-4 w-4" />My Businesses
                 </Link>
               </DropdownMenuItem>
               {profile?.role && ['chapter_admin', 'super_admin'].includes(profile.role) && (
