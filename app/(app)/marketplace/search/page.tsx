@@ -36,47 +36,76 @@ async function SearchResults({ searchParams }: SearchPageProps) {
     ? await parseSearchQuery(params.q!, categories)
     : null
 
-  let query = db
-    .from('businesses')
-    .select('*')
-    .eq('status', 'published')
-
   const ftsTerm = parsed?.keywords?.trim() || params.q?.trim()
-  if (ftsTerm) {
-    query = query.textSearch('search_vector', ftsTerm, { type: 'websearch', config: 'english' })
-  }
-
   const cityFilter = parsed?.city ?? params.city
-  if (cityFilter) {
-    query = query.ilike('city', `%${cityFilter}%`)
-  }
-
   const ALLOWED_REGIONS = ['North America', 'Europe', 'Asia Pacific', 'Middle East', 'Africa', 'Latin America']
   const countryFilter = parsed?.country ?? params.country
-  if (countryFilter && (ALLOWED_REGIONS.includes(countryFilter) || parsed?.country)) {
-    query = query.ilike('country', `%${countryFilter}%`)
-  }
-
   const urlSlugs = Array.isArray(params.category)
     ? params.category
     : params.category ? [params.category] : []
   const allSlugs = [...new Set([...urlSlugs, ...(parsed?.categorySlugs ?? [])])]
+  const catIds = (allSlugs.length > 0 && categories)
+    ? categories.filter((c: { slug: string; id: string }) => allSlugs.includes(c.slug)).map((c: { id: string }) => c.id)
+    : []
 
-  if (allSlugs.length > 0 && categories) {
-    const catIds = categories
-      .filter((c: { slug: string; id: string }) => allSlugs.includes(c.slug))
-      .map((c: { id: string }) => c.id)
-    if (catIds.length > 0) {
-      query = query.overlaps('category_ids', catIds)
+  const buildBaseQuery = () => {
+    let q = db.from('businesses').select('*').eq('status', 'published')
+    if (cityFilter) q = q.ilike('city', `%${cityFilter}%`)
+    if (countryFilter && (ALLOWED_REGIONS.includes(countryFilter) || parsed?.country)) {
+      q = q.ilike('country', `%${countryFilter}%`)
+    }
+    if (catIds.length > 0) q = q.overlaps('category_ids', catIds)
+    return q
+  }
+
+  // Two-pronged search:
+  //  1. Full-text search on businesses (name/tagline/description/tags)
+  //  2. ILIKE on services (title/description) → fetch parent businesses
+  // Then merge, dedupe, and respect filters.
+  const searches: Promise<{ data: Business[] | null }>[] = []
+
+  let primaryQuery = buildBaseQuery()
+  if (ftsTerm) {
+    primaryQuery = primaryQuery.textSearch('search_vector', ftsTerm, { type: 'websearch', config: 'english' })
+  }
+  searches.push(primaryQuery.limit(50) as Promise<{ data: Business[] | null }>)
+
+  if (ftsTerm) {
+    // Find services matching the query, then businesses that own them.
+    const escaped = ftsTerm.replace(/[%_]/g, m => '\\' + m)
+    searches.push(
+      (db.from('services')
+        .select('business_id')
+        .eq('status', 'published')
+        .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
+        .limit(50) as Promise<{ data: Array<{ business_id: string }> | null }>)
+        .then(async ({ data: svcRows }) => {
+          if (!svcRows || svcRows.length === 0) return { data: [] as Business[] }
+          const ids = [...new Set(svcRows.map(r => r.business_id))]
+          return await buildBaseQuery().in('id', ids).limit(50) as { data: Business[] | null }
+        })
+    )
+  }
+
+  const settled = await Promise.all(searches)
+  const seen = new Set<string>()
+  const results: Business[] = []
+  for (const r of settled) {
+    for (const row of (r.data ?? [])) {
+      if (!seen.has(row.id)) {
+        seen.add(row.id)
+        results.push(row)
+      }
     }
   }
 
   const sort = params.sort ?? 'relevance'
-  if (sort === 'newest') query = query.order('created_at', { ascending: false })
-  else if (sort === 'alpha') query = query.order('name')
-  else if (!ftsTerm) query = query.order('created_at', { ascending: false })
-
-  const { data: results } = await query.limit(50)
+  if (sort === 'alpha') {
+    results.sort((a, b) => a.name.localeCompare(b.name))
+  } else if (sort === 'newest' || !ftsTerm) {
+    results.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+  }
+  // (relevance order is preserved from the per-source FTS scoring naturally)
 
   // Pick sponsored ads to inject. Excludes the businesses that already appear organically.
   const organicBusinessIds = (results ?? []).map((b: Business) => b.id)
