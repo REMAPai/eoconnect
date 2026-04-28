@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-between p-6">
         <Link href="/" className="text-2xl font-extrabold tracking-tight">
-          EO<span className="text-primary">connect</span>
+          TAB<span className="text-primary">FT</span>
         </Link>
         <ThemeToggle />
       </header>

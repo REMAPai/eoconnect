@@ -4,7 +4,8 @@ import type { UserRole, UserStatus } from '@/types/database'
 
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createMiddlewareClient(request)
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
   const pathname = request.nextUrl.pathname
 
   const protectedPaths = ['/dashboard', '/marketplace', '/admin']
