@@ -49,6 +49,15 @@ export async function createService(business_id: string, formData: FormData): Pr
   if (!business) return { error: 'Business not found' }
   if (!admin && business.owner_id !== user.id) return { error: 'Not authorized' }
 
+  // MM-07: Hard cap of 3 services per business listing
+  const { count: existingCount } = await db
+    .from('services')
+    .select('id', { count: 'exact', head: true })
+    .eq('business_id', business_id) as { count: number | null }
+  if (existingCount !== null && existingCount >= 3) {
+    return { error: 'Maximum 3 services per business. Delete an existing service to add a new one.' }
+  }
+
   const parsed = ServiceSchema.safeParse({
     title: formData.get('title'),
     description: formData.get('description'),
