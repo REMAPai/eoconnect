@@ -15,90 +15,23 @@ import type { Category } from '@/types/database'
  * Category images keyed by slug — fall back to gradient if not mapped.
  */
 
-const CATEGORY_IMAGES: Record<string, string> = {
-  // Tech / digital
-  'ai-machine-learning':            'https://images.pexels.com/photos/8849295/pexels-photo-8849295.jpeg?auto=compress&cs=tinysrgb&w=1200',
-  'technology-software':            'https://images.pexels.com/photos/8386437/pexels-photo-8386437.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'web-app-development':            'https://images.pexels.com/photos/8386437/pexels-photo-8386437.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'cybersecurity':                  'https://images.pexels.com/photos/8294619/pexels-photo-8294619.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'saas-software-products':         'https://images.pexels.com/photos/18799044/pexels-photo-18799044.jpeg?auto=compress&cs=tinysrgb&w=900',
+// Per-category visuals.  Add an entry here whenever an admin creates a new
+// category — until then, cards fall back to the green gradient.
+//
+// Format:  'category-slug': 'https://your-image-host/path.jpg'
+const CATEGORY_IMAGES: Record<string, string> = {}
 
-  // Professional / advisory
-  'legal-services':                 'https://images.pexels.com/photos/5668806/pexels-photo-5668806.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'professional-services':          'https://images.pexels.com/photos/5668806/pexels-photo-5668806.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'consulting-advisory':            'https://images.pexels.com/photos/7654189/pexels-photo-7654189.jpeg?auto=compress&cs=tinysrgb&w=600',
+// Per-category one-liner shown on the hero & medium cards.
+// If a slug isn't in this map, the card falls back to a generic phrase.
+const CATEGORY_TAGLINES: Record<string, string> = {}
 
-  // Finance
-  'financial-services':             'https://images.pexels.com/photos/4968632/pexels-photo-4968632.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'investment-venture':             'https://images.pexels.com/photos/6694866/pexels-photo-6694866.jpeg?auto=compress&cs=tinysrgb&w=600',
+// Slugs that should win the "big" hero slot when present.
+// First match wins. If none of these exist, the algorithm picks
+// whichever category sorts first.
+const HERO_PRIORITY: string[] = []
 
-  // Marketing / media
-  'marketing-creative':             'https://images.pexels.com/photos/7651801/pexels-photo-7651801.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'media-entertainment':            'https://images.pexels.com/photos/7688106/pexels-photo-7688106.jpeg?auto=compress&cs=tinysrgb&w=600',
-
-  // Real estate / industrial / construction
-  'real-estate-property':           'https://images.pexels.com/photos/27307399/pexels-photo-27307399.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'manufacturing-industry':         'https://images.pexels.com/photos/34222005/pexels-photo-34222005.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'construction-trades':            'https://images.pexels.com/photos/2383650/pexels-photo-2383650.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'logistics-transport':            'https://images.pexels.com/photos/8783533/pexels-photo-8783533.jpeg?auto=compress&cs=tinysrgb&w=900',
-
-  // Health / education
-  'health-wellness':                'https://images.pexels.com/photos/4108124/pexels-photo-4108124.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'education-training':             'https://images.pexels.com/photos/8423416/pexels-photo-8423416.jpeg?auto=compress&cs=tinysrgb&w=900',
-
-  // Commerce / hospitality / food
-  'retail-ecommerce':               'https://images.pexels.com/photos/6994293/pexels-photo-6994293.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'hospitality-events':             'https://images.pexels.com/photos/15448073/pexels-photo-15448073.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'food-beverage':                  'https://images.pexels.com/photos/31089991/pexels-photo-31089991.jpeg?auto=compress&cs=tinysrgb&w=900',
-
-  // People / talent
-  'hr-staffing':                    'https://images.pexels.com/photos/5583258/pexels-photo-5583258.jpeg?auto=compress&cs=tinysrgb&w=900',
-  'recruiting-talent':              'https://images.pexels.com/photos/5439143/pexels-photo-5439143.jpeg?auto=compress&cs=tinysrgb&w=900',
-
-  // Sustainability
-  'environmental-sustainability':   'https://images.pexels.com/photos/4148472/pexels-photo-4148472.jpeg?auto=compress&cs=tinysrgb&w=900',
-}
-
-const CATEGORY_TAGLINES: Record<string, string> = {
-  'ai-machine-learning':            'ML strategy, automation, and AI integration for modern operators.',
-  'technology-software':            'Architecture, DevOps, and platform engineering.',
-  'web-app-development':            'Full-stack engineering and product builds.',
-  'cybersecurity':                  'Threat detection, audits, and compliance.',
-  'saas-software-products':         'Vetted SaaS tooling for scaling teams.',
-  'legal-services':                 'Complex structure, M&A, and cross-border protection for scaling entities.',
-  'professional-services':          'Trusted advisors across legal, accounting, and operations.',
-  'consulting-advisory':            'Strategy and operational transformation.',
-  'financial-services':             'Capital, treasury, and financial structuring.',
-  'investment-venture':             'Growth capital, VC, and strategic investors.',
-  'marketing-creative':             'Growth, brand, and creative for founder-led businesses.',
-  'media-entertainment':            'Content production, PR, and media partnerships.',
-  'real-estate-property':           'Commercial leasing, asset management, and property advisory.',
-  'manufacturing-industry':         'Industrial production, supply chain, and ops.',
-  'construction-trades':            'Build-out, fitout, and infrastructure trades.',
-  'logistics-transport':            'Freight, fulfillment, and last-mile logistics.',
-  'health-wellness':                'Healthcare, wellness, and corporate wellbeing.',
-  'education-training':             'Executive learning, L&D, and training programs.',
-  'retail-ecommerce':               'DTC, marketplaces, and retail operations.',
-  'hospitality-events':             'Venues, event production, and hospitality services.',
-  'food-beverage':                  'F&B operators, catering, and beverage distribution.',
-  'hr-staffing':                    'People ops, payroll, and outsourced HR.',
-  'recruiting-talent':              'Executive search and talent acquisition.',
-  'environmental-sustainability':   'ESG, carbon, and sustainable operations.',
-}
-
-const HERO_PRIORITY = [
-  'ai-machine-learning',
-  'technology-software',
-  'web-app-development',
-  'consulting-advisory',
-]
-
-const MEDIUM_PRIORITY = [
-  'legal-services',
-  'professional-services',
-  'consulting-advisory',
-  'financial-services',
-]
+// Slugs that should fill the medium card if available.
+const MEDIUM_PRIORITY: string[] = []
 
 interface Props {
   categories: Pick<Category, 'id' | 'name' | 'slug' | 'icon'>[]

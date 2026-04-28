@@ -1,26 +1,3 @@
-insert into public.categories (name, slug, icon, sort_order) values
-  ('Professional Services',    'professional-services',    '⚖️',  1),
-  ('Technology & Software',    'technology-software',      '💻',  2),
-  ('Marketing & Creative',     'marketing-creative',       '🎨',  3),
-  ('Financial Services',       'financial-services',       '💰',  4),
-  ('Real Estate & Property',   'real-estate-property',     '🏢',  5),
-  ('Manufacturing & Industry', 'manufacturing-industry',   '🏭',  6),
-  ('Health & Wellness',        'health-wellness',          '❤️',  7),
-  ('Education & Training',     'education-training',       '📚',  8),
-  ('Retail & E-Commerce',      'retail-ecommerce',         '🛒',  9),
-  ('Hospitality & Events',     'hospitality-events',       '🎉', 10),
-  ('Construction & Trades',    'construction-trades',      '🔨', 11),
-  ('Media & Entertainment',    'media-entertainment',      '🎬', 12),
-  ('Logistics & Transport',    'logistics-transport',      '🚚', 13),
-  ('Food & Beverage',          'food-beverage',            '🍽️', 14),
-  ('AI & Machine Learning',    'ai-machine-learning',      '🤖', 15),
-  ('Cybersecurity',            'cybersecurity',            '🔒', 16),
-  ('HR & Staffing',            'hr-staffing',              '👥', 17),
-  ('Legal Services',           'legal-services',           '⚖️', 18),
-  ('Consulting & Advisory',    'consulting-advisory',      '💼', 19),
-  ('Investment & Venture',     'investment-venture',       '📈', 20),
-  ('Environmental & Sustainability', 'environmental-sustainability', '🌱', 21),
-  ('SaaS & Software Products', 'saas-software-products',   '🖥️', 22),
-  ('Web & App Development',    'web-app-development',      '⚙️', 23),
-  ('Recruiting & Talent',      'recruiting-talent',        '🎯', 24)
-on conflict (slug) do nothing;
+-- Categories are managed via the admin UI (/admin/categories).
+-- This file intentionally seeds nothing — leave it empty unless you
+-- want fresh installations to come pre-populated.
