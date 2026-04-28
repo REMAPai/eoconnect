@@ -15,23 +15,55 @@ import type { Category } from '@/types/database'
  * Category images keyed by slug — fall back to gradient if not mapped.
  */
 
-// Per-category visuals.  Add an entry here whenever an admin creates a new
-// category — until then, cards fall back to the green gradient.
+// Per-category images. EMPTY for now — user will provide custom artwork.
+// Until then, cards render with a clean green gradient placeholder.
 //
-// Format:  'category-slug': 'https://your-image-host/path.jpg'
+// To wire an image:  'category-slug': 'https://...'
 const CATEGORY_IMAGES: Record<string, string> = {}
 
-// Per-category one-liner shown on the hero & medium cards.
-// If a slug isn't in this map, the card falls back to a generic phrase.
-const CATEGORY_TAGLINES: Record<string, string> = {}
+// Per-category one-liners for the hero & medium cards.
+const CATEGORY_TAGLINES: Record<string, string> = {
+  'ai-machine-learning':            'ML strategy, automation, and AI integration for modern operators.',
+  'technology-software':            'Architecture, DevOps, and platform engineering.',
+  'web-app-development':            'Full-stack engineering and product builds.',
+  'cybersecurity':                  'Threat detection, audits, and compliance.',
+  'saas-software-products':         'Vetted SaaS tooling for scaling teams.',
+  'legal-services':                 'Complex structure, M&A, and cross-border protection for scaling entities.',
+  'professional-services':          'Trusted advisors across legal, accounting, and operations.',
+  'consulting-advisory':            'Strategy and operational transformation.',
+  'financial-services':             'Capital, treasury, and financial structuring.',
+  'investment-venture':             'Growth capital, VC, and strategic investors.',
+  'marketing-creative':             'Growth, brand, and creative for founder-led businesses.',
+  'media-entertainment':            'Content production, PR, and media partnerships.',
+  'real-estate-property':           'Commercial leasing, asset management, and property advisory.',
+  'manufacturing-industry':         'Industrial production, supply chain, and ops.',
+  'construction-trades':            'Build-out, fitout, and infrastructure trades.',
+  'logistics-transport':            'Freight, fulfillment, and last-mile logistics.',
+  'health-wellness':                'Healthcare, wellness, and corporate wellbeing.',
+  'education-training':             'Executive learning, L&D, and training programs.',
+  'retail-ecommerce':               'DTC, marketplaces, and retail operations.',
+  'hospitality-events':             'Venues, event production, and hospitality services.',
+  'food-beverage':                  'F&B operators, catering, and beverage distribution.',
+  'hr-staffing':                    'People ops, payroll, and outsourced HR.',
+  'recruiting-talent':              'Executive search and talent acquisition.',
+  'environmental-sustainability':   'ESG, carbon, and sustainable operations.',
+}
 
-// Slugs that should win the "big" hero slot when present.
-// First match wins. If none of these exist, the algorithm picks
-// whichever category sorts first.
-const HERO_PRIORITY: string[] = []
+// AI gets the hero slot when present; otherwise tech / advisory pick up.
+const HERO_PRIORITY = [
+  'ai-machine-learning',
+  'technology-software',
+  'web-app-development',
+  'consulting-advisory',
+]
 
-// Slugs that should fill the medium card if available.
-const MEDIUM_PRIORITY: string[] = []
+// Avoids running two near-duplicate categories on the front page (e.g. legal vs professional).
+const MEDIUM_PRIORITY = [
+  'legal-services',
+  'professional-services',
+  'consulting-advisory',
+  'financial-services',
+]
 
 interface Props {
   categories: Pick<Category, 'id' | 'name' | 'slug' | 'icon'>[]
