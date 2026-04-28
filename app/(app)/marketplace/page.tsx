@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/marketplace/search-bar'
-import { CategoryGrid } from '@/components/marketplace/category-grid'
 import { TrendingCategories } from '@/components/marketplace/trending-categories'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { SponsoredCard } from '@/components/marketplace/sponsored-card'
@@ -62,14 +61,6 @@ export default async function MarketplacePage() {
       {categories && categories.length > 0 && (
         <TrendingCategories categories={categories} />
       )}
-
-      {/* All Categories */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">All Categories</h2>
-        </div>
-        {categories && <CategoryGrid categories={categories} />}
-      </section>
 
       {/* Listings — sponsored injection added in P4-T6 */}
       {recent && recent.length > 0 && (

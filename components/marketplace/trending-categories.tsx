@@ -119,7 +119,7 @@ export function TrendingCategories({ categories }: Props) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 h-[400px] md:h-[360px]">
+      <div className="grid grid-cols-1 md:grid-cols-12 md:grid-rows-2 gap-3 h-auto md:h-[360px]">
         {/* Hero — large left card */}
         <Link
           href={`/marketplace/search?category=${hero.slug}`}
@@ -161,8 +161,8 @@ export function TrendingCategories({ categories }: Props) {
           </Link>
         )}
 
-        {/* Right column — two stacked small cards */}
-        <div className="md:col-span-3 grid grid-rows-2 gap-3">
+        {/* Right column — two stacked small cards (full-height stretch) */}
+        <div className="md:col-span-3 md:row-span-2 grid grid-rows-2 gap-3 h-full">
           {smallTop && <SmallCard category={smallTop} />}
           {smallBottom && <SmallCard category={smallBottom} />}
         </div>
@@ -175,7 +175,7 @@ function SmallCard({ category }: { category: Pick<Category, 'name' | 'slug' | 'i
   return (
     <Link
       href={`/marketplace/search?category=${category.slug}`}
-      className="group relative rounded-2xl overflow-hidden bg-card border border-border block min-h-[120px]"
+      className="group relative rounded-2xl overflow-hidden bg-card border border-border block min-h-[120px] h-full"
     >
       <CategoryImage slug={category.slug} alt={category.name} />
       <div className="absolute inset-0 bg-gradient-to-tr from-black/70 via-black/30 to-transparent" />
