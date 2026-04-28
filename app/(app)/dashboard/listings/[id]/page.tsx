@@ -24,7 +24,16 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
     .single()
 
   if (!service) notFound()
-  if (service.businesses.owner_id !== user.id) notFound()
+
+  if (service.businesses.owner_id !== user.id) {
+    // Allow admins to edit any service
+    const { data: me } = await db.from('profiles').select('role').eq('id', user.id).single() as {
+      data: { role: 'member' | 'chapter_admin' | 'super_admin' } | null
+    }
+    if (!me || !['chapter_admin', 'super_admin'].includes(me.role)) {
+      notFound()
+    }
+  }
 
   // Strip the joined data before passing to form
   const { businesses: _businesses, ...serviceData } = service as Service & { businesses: { owner_id: string } }
