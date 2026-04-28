@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 interface LogoProps {
-  /** 'lockup' = monogram + wordmark, 'mark' = monogram square only */
+  /** 'lockup' = full Member Market logo, 'mark' = MM monogram square only */
   variant?: 'lockup' | 'mark'
   className?: string
   /** Pixel height — width auto-adjusts to keep aspect ratio. Default 32. */
@@ -11,14 +11,10 @@ interface LogoProps {
 /**
  * Member Market logo.
  *
- * To swap to a designer-supplied raster/SVG file later: drop the file at
- * /public/images/member-market-logo.svg (or .png) and replace this whole
- * component with `<Image src="/images/member-market-logo.svg" ... />`.
- *
- * Until then, this inline SVG matches the brand mark — dark forest green
- * monogram with cream "MM", "member" wordmark in foreground, ".market" in
- * the secondary amber. Uses CSS variables so it inverts cleanly between
- * light and dark themes.
+ * Lockup variant uses the designer-supplied SVG file
+ * (/public/images/member-market-logo.svg). Mark variant is an
+ * inline SVG matching the brand box for tight spaces (favicon /
+ * mobile navbar) where the wordmark would be unreadable.
  */
 export function Logo({ variant = 'lockup', className, height = 32 }: LogoProps) {
   if (variant === 'mark') {
@@ -48,46 +44,18 @@ export function Logo({ variant = 'lockup', className, height = 32 }: LogoProps) 
     )
   }
 
-  // Full lockup: square + wordmark
-  // Width = height * ~6 keeps the aspect roughly matching the reference image.
-  const width = Math.round(height * 5.7)
-
+  // Designer file. Source aspect is roughly 3:1 (wide). The natural
+  // viewBox is 900×900 but visible content is only the bottom band, so
+  // we let the file scale by height with `width: auto` to preserve it.
+  // eslint-disable-next-line @next/next/no-img-element
   return (
-    <svg
-      viewBox="0 0 228 40"
+    <img
+      src="/images/member-market-logo.svg"
+      alt="Member Market"
       height={height}
-      width={width}
-      className={cn('flex-shrink-0', className)}
-      aria-label="Member Market"
-      role="img"
-    >
-      {/* Green monogram square */}
-      <rect x="0" y="0" width="40" height="40" rx="8" fill="var(--primary)" />
-      <text
-        x="20"
-        y="27"
-        textAnchor="middle"
-        fontFamily="var(--font-sans, system-ui)"
-        fontSize="16"
-        fontWeight="800"
-        fill="var(--primary-foreground)"
-        letterSpacing="-0.5"
-      >
-        MM
-      </text>
-
-      {/* Wordmark — "member" foreground + ".market" amber */}
-      <text
-        x="52"
-        y="28"
-        fontFamily="var(--font-sans, system-ui)"
-        fontSize="22"
-        fontWeight="700"
-        letterSpacing="-0.5"
-      >
-        <tspan fill="var(--foreground)">member</tspan>
-        <tspan fill="var(--secondary)">.market</tspan>
-      </text>
-    </svg>
+      style={{ height, width: 'auto' }}
+      className={cn('flex-shrink-0 select-none', className)}
+      draggable={false}
+    />
   )
 }

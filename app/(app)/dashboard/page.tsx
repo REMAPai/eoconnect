@@ -10,25 +10,35 @@ import { AnalyticsChart } from '@/components/dashboard/analytics-chart'
 import { LeadProgress } from '@/components/dashboard/lead-progress'
 import { DashboardViewToggle } from '@/components/dashboard/dashboard-view-toggle'
 import { CustomerView } from '@/components/dashboard/customer-view'
+import { BusinessSwitcher } from '@/components/dashboard/business-switcher'
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{ business?: string }>
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams
   const supabase = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // Members can now own multiple businesses (migration 007). maybeSingle()
-  // would return null when >1 row exists, so the dashboard would show the
-  // 'no business yet' empty state for any user with 2+ businesses. Pick the
-  // most recently created one for the analytics surface.
-  const { data: businesses } = await db
+  // Fetch ALL the user's businesses for the switcher dropdown.
+  const { data: ownedBusinesses } = await db
     .from('businesses')
     .select('id, name, status')
     .eq('owner_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1) as { data: Array<{ id: string; name: string; status: string }> | null }
-  const business = businesses?.[0] ?? null
+    .order('created_at', { ascending: false }) as {
+      data: Array<{ id: string; name: string; status: string }> | null
+    }
+  const allBusinesses = ownedBusinesses ?? []
+  // Pick the business named in ?business=<id> if it belongs to this user,
+  // otherwise default to the most recent one.
+  const business =
+    (params.business && allBusinesses.find(b => b.id === params.business))
+    ?? allBusinesses[0]
+    ?? null
 
   // Fetch conversations where user is a participant
   const { data: conversations } = await db
@@ -87,10 +97,17 @@ export default async function DashboardPage() {
 
   const providerView = (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header — name + switcher dropdown when multiple businesses exist */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">{business.name}</h1>
+        <div className="min-w-0">
+          {allBusinesses.length > 1 ? (
+            <BusinessSwitcher
+              businesses={allBusinesses}
+              currentId={business.id}
+            />
+          ) : (
+            <h1 className="text-2xl font-bold">{business.name}</h1>
+          )}
           <p className="text-muted-foreground text-sm mt-0.5">Business Dashboard</p>
         </div>
         <Badge variant="secondary" className="capitalize ml-auto">{business.status}</Badge>
