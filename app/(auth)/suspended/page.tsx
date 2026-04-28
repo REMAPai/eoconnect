@@ -9,7 +9,7 @@ export default function SuspendedPage() {
         <div className="text-5xl mb-4">🔒</div>
         <h1 className="text-2xl font-bold mb-2">Account Suspended</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Your TABFT account has been suspended. Please contact your chapter admin for more information.
+          Your Member Market account has been suspended. Please contact your chapter admin for more information.
         </p>
         <Link
           href="/login"

@@ -46,7 +46,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   // Fire-and-forget welcome email (Supabase will send the verification email separately)
   void sendEmail({
     to: parsed.data.email,
-    subject: 'Welcome to TABFT',
+    subject: 'Welcome to Member Market',
     html: welcomeEmail(parsed.data.fullName, process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   })
 

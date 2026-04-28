@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { SearchBar } from '@/components/marketplace/search-bar'
 import { CategoryGrid } from '@/components/marketplace/category-grid'
+import { TrendingCategories } from '@/components/marketplace/trending-categories'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { SponsoredCard } from '@/components/marketplace/sponsored-card'
 import { pickAds } from '@/lib/ads/picker'
@@ -57,10 +58,15 @@ export default async function MarketplacePage() {
         )}
       </section>
 
-      {/* Categories */}
+      {/* Trending in EO — featured mosaic */}
+      {categories && categories.length > 0 && (
+        <TrendingCategories categories={categories} />
+      )}
+
+      {/* All Categories */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">Browse by Category</h2>
+          <h2 className="text-lg font-bold">All Categories</h2>
         </div>
         {categories && <CategoryGrid categories={categories} />}
       </section>

@@ -11,7 +11,7 @@ function getClient(): Resend | null {
   return _resend
 }
 
-const FROM = process.env.EMAIL_FROM ?? 'TABFT <noreply@tabft.com>'
+const FROM = process.env.EMAIL_FROM ?? 'Member Market <noreply@membermarket.com>'
 
 export async function sendEmail(opts: { to: string; subject: string; html: string }): Promise<{ ok: boolean; error?: string }> {
   const client = getClient()
@@ -36,18 +36,18 @@ const wrap = (title: string, body: string) => `
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;">
   <div style="max-width:560px;margin:40px auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
     <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:24px;">
-      TAB<span style="color:#5546ff;">FT</span>
+      Member<span style="color:#5546ff;">Market</span>
     </div>
     ${body}
     <p style="font-size:12px;color:#999;margin-top:32px;border-top:1px solid #eee;padding-top:16px;">
-      You received this because you're a member of TABFT — There's A Business For That.
+      You received this because you're a member of Member Market — There's A Business For That.
     </p>
   </div>
 </body></html>`
 
 export function welcomeEmail(name: string, siteUrl: string) {
-  return wrap('Welcome to TABFT', `
-    <h1 style="font-size:20px;margin:0 0 12px;">Welcome to TABFT, ${name}!</h1>
+  return wrap('Welcome to Member Market', `
+    <h1 style="font-size:20px;margin:0 0 12px;">Welcome to Member Market, ${name}!</h1>
     <p style="font-size:15px;line-height:1.5;color:#444;">
       You now have access to the EO members' marketplace. Browse trusted businesses run by fellow members,
       send inquiries, and post your own services to reach the network.
@@ -98,7 +98,7 @@ export function newReviewEmail(reviewerName: string, businessName: string, ratin
 
 export function adApprovedEmail(businessName: string, siteUrl: string, campaignId: string) {
   return {
-    subject: `Your TABFT campaign is live`,
+    subject: `Your Member Market campaign is live`,
     html: wrap('Campaign live', `
       <h1 style="font-size:18px;margin:0 0 12px;">Your campaign for ${businessName} is now live</h1>
       <p style="font-size:14px;color:#444;line-height:1.5;">
@@ -116,7 +116,7 @@ export function adApprovedEmail(businessName: string, siteUrl: string, campaignI
 
 export function adRejectedEmail(businessName: string, reason: string, siteUrl: string, campaignId: string) {
   return {
-    subject: `Your TABFT campaign needs changes`,
+    subject: `Your Member Market campaign needs changes`,
     html: wrap('Campaign rejected', `
       <h1 style="font-size:18px;margin:0 0 12px;">Your campaign for ${businessName} wasn't approved</h1>
       <p style="font-size:14px;color:#444;line-height:1.5;"><strong>Reason:</strong> ${escapeHtml(reason)}</p>

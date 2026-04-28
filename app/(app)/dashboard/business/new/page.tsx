@@ -28,7 +28,7 @@ export default async function NewBusinessPage() {
     <div>
       <h1 className="text-2xl font-bold text-center mb-2">Create Your Business Profile</h1>
       <p className="text-muted-foreground text-center mb-8">
-        List your business in the TABFT marketplace and start getting discovered.
+        List your business in the Member Market marketplace and start getting discovered.
       </p>
       <BusinessProfileWizard categories={(categories ?? []) as import('@/types/database').Category[]} />
     </div>

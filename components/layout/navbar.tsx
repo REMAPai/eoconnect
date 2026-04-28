@@ -40,7 +40,7 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
       <div className="mx-auto max-w-[1280px] px-4 md:px-6 flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/marketplace" className="text-xl font-extrabold tracking-tight">
-            TAB<span className="text-primary">FT</span>
+            Member<span className="text-primary">Market</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (

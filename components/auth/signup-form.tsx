@@ -26,7 +26,7 @@ export function SignupForm() {
   return (
     <div className="w-full max-w-md">
       <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-        <h1 className="text-2xl font-bold mb-2">Join TABFT</h1>
+        <h1 className="text-2xl font-bold mb-2">Join Member Market</h1>
         <p className="text-muted-foreground text-sm mb-6">
           Exclusive to verified members
         </p>

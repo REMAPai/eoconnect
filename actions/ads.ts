@@ -82,7 +82,7 @@ export async function createCampaign(formData: FormData): Promise<CreateCampaign
         line_items: [{
           price_data: {
             currency: 'usd',
-            product_data: { name: `TABFT Ads — ${business.name}`, description: `Budget for campaign ${campaign.id}` },
+            product_data: { name: `Member Market Ads — ${business.name}`, description: `Budget for campaign ${campaign.id}` },
             unit_amount: Math.round(parsed.data.budget_total * 100),
           },
           quantity: 1,
@@ -235,7 +235,7 @@ export async function topUpCampaign(id: string, amount: number): Promise<{ error
       line_items: [{
         price_data: {
           currency: 'usd',
-          product_data: { name: `TABFT Ads — Top up`, description: `Add to budget of campaign ${id}` },
+          product_data: { name: `Member Market Ads — Top up`, description: `Add to budget of campaign ${id}` },
           unit_amount: Math.round(amount * 100),
         },
         quantity: 1,

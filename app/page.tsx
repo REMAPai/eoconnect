@@ -27,7 +27,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-between px-6 py-5 border-b border-border">
         <span className="text-2xl font-extrabold tracking-tight">
-          TAB<span className="text-primary">FT</span>
+          Member<span className="text-primary">Market</span>
         </span>
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -69,7 +69,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
       </main>
 
       <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
-        © {new Date().getFullYear()} TABFT · Exclusive to EO Members
+        © {new Date().getFullYear()} Member Market · Exclusive to EO Members
       </footer>
     </div>
   )
