@@ -53,16 +53,20 @@ async function SearchResults({ searchParams }: SearchPageProps) {
 
   let results: Business[] = []
   const queryText = params.q?.trim()
+  const tierCounts: Record<string, number> = {}
 
   if (queryText) {
     // ── Tier 1: Vector search (semantic) ──
     const queryEmbedding = await getEmbedding(queryText)
+    tierCounts.embedding_ok = queryEmbedding ? 1 : 0
     if (queryEmbedding) {
-      const { data: matches } = await db.rpc('search_businesses_by_embedding', {
+      const { data: matches, error: rpcErr } = await db.rpc('search_businesses_by_embedding', {
         query_embedding: queryEmbedding,
         match_count: 50,
         min_similarity: 0.20,
-      }) as { data: Array<{ id: string; similarity: number }> | null }
+      }) as { data: Array<{ id: string; similarity: number }> | null; error: { message: string } | null }
+      if (rpcErr) tierCounts.vector_rpc_error = 1
+      tierCounts.tier1_vector = matches?.length ?? 0
 
       if (matches && matches.length > 0) {
         const ids = matches.map(m => m.id)
@@ -72,11 +76,12 @@ async function SearchResults({ searchParams }: SearchPageProps) {
       }
     }
 
-    // ── Tier 2: Postgres full-text search (vector returned 0 or skipped) ──
+    // ── Tier 2: Postgres full-text search ──
     if (results.length === 0) {
       const { data: rows } = await buildBase()
         .textSearch('search_vector', queryText, { type: 'websearch', config: 'english' })
         .limit(50) as { data: Business[] | null }
+      tierCounts.tier2_fts = rows?.length ?? 0
       results = rows ?? []
     }
 
@@ -86,6 +91,7 @@ async function SearchResults({ searchParams }: SearchPageProps) {
       const { data: rows } = await buildBase()
         .or(`name.ilike.%${escaped}%,tagline.ilike.%${escaped}%,description.ilike.%${escaped}%`)
         .limit(50) as { data: Business[] | null }
+      tierCounts.tier3_ilike_business = rows?.length ?? 0
       results = rows ?? []
     }
 
@@ -97,12 +103,23 @@ async function SearchResults({ searchParams }: SearchPageProps) {
         .eq('status', 'published')
         .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
         .limit(50) as { data: Array<{ business_id: string }> | null }
+      tierCounts.tier4_services = svcRows?.length ?? 0
       if (svcRows && svcRows.length > 0) {
         const ids = [...new Set(svcRows.map(r => r.business_id))]
         const { data: rows } = await buildBase().in('id', ids).limit(50) as { data: Business[] | null }
         results = rows ?? []
       }
     }
+
+    // Diagnostic: surfaces how many results each tier returned.
+    // Helps debug "search returns 0" — usually means the user has no
+    // PUBLISHED business or no embeddings populated yet.
+    console.log('[search]', JSON.stringify({
+      query: queryText,
+      tiers: tierCounts,
+      final: results.length,
+      hardFilters: { city: cityHard, country: countryHard, categoryIds: hardCatIds.length },
+    }))
   } else {
     // No query — list mode (newest first, respecting filters)
     const { data: rows } = await buildBase()

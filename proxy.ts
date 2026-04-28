@@ -1,6 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createMiddlewareClient } from '@/lib/supabase/middleware-client'
 import type { EoMembershipType, UserRole, UserStatus } from '@/types/database'
+
+type ProfileRow = {
+  role: UserRole
+  status: UserStatus
+  eo_membership_type: EoMembershipType | null
+  country: string | null
+  onboarded_at: string | null
+}
 
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createMiddlewareClient(request)
@@ -24,46 +33,58 @@ export async function proxy(request: NextRequest) {
   if (!user) return response
 
   // Single profile fetch for all gating below.
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('role, status, eo_membership_type, country, onboarded_at')
     .eq('id', user.id)
-    .single() as {
-      data: {
-        role: UserRole
-        status: UserStatus
-        eo_membership_type: EoMembershipType | null
-        country: string | null
-        onboarded_at: string | null
-      } | null
-      error: unknown
+    .maybeSingle() as { data: ProfileRow | null; error: unknown }
+
+  // Defensive: if no profile row exists (e.g. user signed up before the
+  // auto-create trigger in migration 003, or the trigger silently failed),
+  // create one now using the service role and re-fetch.
+  if (!profile && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const admin = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { persistSession: false } }
+      )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const adminAny = admin as any
+      const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+      await adminAny.from('profiles').upsert({
+        id: user.id,
+        full_name: (meta.full_name as string) ?? (meta.name as string) ?? user.email?.split('@')[0] ?? 'Member',
+        avatar_url: (meta.avatar_url as string | undefined) ?? null,
+        eo_membership_email: user.email ?? null,
+        // onboarded_at left null so brand-new signups still flow through onboarding
+      }, { onConflict: 'id' })
+
+      const refetch = await supabase
+        .from('profiles')
+        .select('role, status, eo_membership_type, country, onboarded_at')
+        .eq('id', user.id)
+        .maybeSingle() as { data: ProfileRow | null }
+      profile = refetch.data
+    } catch (err) {
+      console.error('[middleware] profile upsert failed:', err)
     }
+  }
 
   if (profile?.status === 'suspended' && pathname !== '/suspended') {
     return NextResponse.redirect(new URL('/suspended', request.url))
   }
 
   if (pathname.startsWith('/admin')) {
-    // TEMP DEBUG — surface the actual gate decision so we can see why a
-    // super_admin user is being redirected. Will remove once diagnosed.
-    console.log('[admin-gate]', JSON.stringify({
-      user_id: user.id,
-      user_email: user.email,
-      profile_role: profile?.role ?? null,
-      profile_status: profile?.status ?? null,
-      profile_is_null: !profile,
-    }))
     if (!profile || !['chapter_admin', 'super_admin'].includes(profile.role)) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
-  // Existing users (onboarded_at backfilled in migration 005) skip the gate
-  // entirely. Only brand-new signups (onboarded_at IS NULL) get guided through
-  // the onboarding form + business wizard.
-  const isNewUser = profile && !profile.onboarded_at
-
-  if (isNewUser) {
+  // Onboarding gate — only fires for genuine new signups (onboarded_at IS NULL).
+  // Existing users were grandfathered in migration 005.
+  if (profile && !profile.onboarded_at) {
+    const p = profile
     const exemptFromOnboardingGate =
       pathname === '/onboarding' ||
       pathname.startsWith('/auth') ||
@@ -71,18 +92,16 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith('/_next') ||
       pathname === '/'
 
-    // Step 1: must complete the onboarding form
-    if (!exemptFromOnboardingGate && (!profile.eo_membership_type || !profile.country)) {
+    if (!exemptFromOnboardingGate && (!p.eo_membership_type || !p.country)) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     }
 
-    // Step 2: must list a business
     const exemptFromBusinessGate =
       exemptFromOnboardingGate ||
       pathname.startsWith('/dashboard/business/new') ||
       pathname.startsWith('/admin')
 
-    if (!exemptFromBusinessGate && profile.eo_membership_type && profile.country) {
+    if (!exemptFromBusinessGate && p.eo_membership_type && p.country) {
       const { data: business } = await supabase
         .from('businesses')
         .select('id')
