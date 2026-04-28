@@ -10,6 +10,7 @@ const SignUpSchema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   chapter: z.string().optional(),
+  membershipType: z.enum(['current_member', 'alumni', 'accelerator'], { message: 'Select your EO membership type' }),
 })
 
 const SignInSchema = z.object({
@@ -25,6 +26,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     email: formData.get('email'),
     password: formData.get('password'),
     chapter: formData.get('chapter'),
+    membershipType: formData.get('membershipType'),
   })
 
   if (!parsed.success) {
@@ -36,12 +38,26 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { full_name: parsed.data.fullName, eo_chapter: parsed.data.chapter },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/verify`,
+      data: {
+        full_name: parsed.data.fullName,
+        eo_chapter: parsed.data.chapter,
+        eo_membership_type: parsed.data.membershipType,
+      },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
   })
 
   if (error) return { error: error.message }
+
+  // Save membership_type to profile (handle_new_user trigger creates the row)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  const { data: { user: newUser } } = await supabase.auth.getUser()
+  if (newUser) {
+    await db.from('profiles')
+      .update({ eo_membership_type: parsed.data.membershipType })
+      .eq('id', newUser.id)
+  }
 
   // Fire-and-forget welcome email (Supabase will send the verification email separately)
   void sendEmail({

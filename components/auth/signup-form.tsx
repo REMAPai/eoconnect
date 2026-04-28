@@ -5,12 +5,14 @@ import { signUp } from '@/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { GoogleButton } from './google-button'
 import Link from 'next/link'
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
+  const [membershipType, setMembershipType] = useState('')
   const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -55,6 +57,20 @@ export function SignupForm() {
           <div className="space-y-2">
             <Label htmlFor="email">Membership Email</Label>
             <Input id="email" name="email" type="email" placeholder="you@company.com" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="membershipType">EO Membership Type *</Label>
+            <Select value={membershipType} onValueChange={(v: string | null) => setMembershipType(v ?? '')}>
+              <SelectTrigger id="membershipType">
+                <SelectValue placeholder="Select your status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current_member">Current EO Member</SelectItem>
+                <SelectItem value="alumni">EO Alumni</SelectItem>
+                <SelectItem value="accelerator">EO Accelerator</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="membershipType" value={membershipType} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="chapter">EO Chapter</Label>

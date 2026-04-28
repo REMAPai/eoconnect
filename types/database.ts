@@ -2,6 +2,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type UserRole = 'member' | 'chapter_admin' | 'super_admin'
 export type UserStatus = 'pending' | 'active' | 'suspended'
+export type EoMembershipType = 'current_member' | 'alumni' | 'accelerator'
 export type BusinessStatus = 'draft' | 'published' | 'paused'
 export type PricingModel = 'fixed' | 'hourly' | 'project' | 'contact'
 export type AdGoal = 'more_views' | 'sponsored_search'
@@ -15,6 +16,8 @@ export interface Profile {
   avatar_url: string | null
   eo_chapter: string | null
   eo_membership_email: string | null
+  eo_membership_type: EoMembershipType | null
+  country: string | null
   role: UserRole
   status: UserStatus
   created_at: string
