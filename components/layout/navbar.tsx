@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTransition } from 'react'
-import { Settings, User } from 'lucide-react'
+import { Settings, User, Menu } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
 import { Logo } from './logo'
 import { MessageIndicator, NotificationBell } from './notification-indicator'
@@ -38,8 +38,43 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
-      <div className="mx-auto max-w-[1280px] px-4 md:px-6 flex h-16 items-center justify-between">
-        <div className="flex items-center gap-8">
+      <div className="mx-auto max-w-[1280px] px-3 sm:px-4 md:px-6 flex h-16 items-center justify-between gap-2">
+        <div className="flex items-center gap-8 min-w-0">
+          {/* Mobile hamburger — opens nav links in a dropdown */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Open menu">
+                <Menu className="h-5 w-5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {navLinks.map(link => {
+                  const isActive = link.href === '/dashboard'
+                    ? pathname === '/dashboard'
+                    : pathname.startsWith(link.href)
+                  return (
+                    <DropdownMenuItem key={link.href}>
+                      <Link
+                        href={link.href}
+                        className={cn(
+                          'flex items-center w-full',
+                          isActive && 'text-primary font-medium'
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  )
+                })}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link href="/dashboard/listings/new" className="flex items-center w-full text-primary font-medium">
+                    + Post Service
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <Link href="/marketplace" aria-label="Member Market home">
             <Logo height={28} className="hidden sm:block" />
             <Logo variant="mark" height={32} className="sm:hidden" />
@@ -62,13 +97,13 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
           </nav>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {profile && <MessageIndicator initialCount={unreadMessages} userId={profile.id} />}
           <NotificationBell />
           <ThemeToggle />
           <Link
             href="/dashboard/listings/new"
-            className={cn(buttonVariants({ size: 'sm' }), 'bg-primary text-primary-foreground font-bold ml-2')}
+            className={cn(buttonVariants({ size: 'sm' }), 'hidden sm:inline-flex bg-primary text-primary-foreground font-bold ml-1')}
           >
             Post Service
           </Link>

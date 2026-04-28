@@ -123,7 +123,7 @@ export function TrendingCategories({ categories }: Props) {
         {/* Hero — large left card */}
         <Link
           href={`/marketplace/search?category=${hero.slug}`}
-          className="md:col-span-6 row-span-2 group relative rounded-2xl overflow-hidden bg-card border border-border block"
+          className="md:col-span-6 md:row-span-2 group relative rounded-2xl overflow-hidden bg-card border border-border block min-h-[260px] md:min-h-0"
         >
           <CategoryImage slug={hero.slug} alt={hero.name} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
@@ -145,7 +145,7 @@ export function TrendingCategories({ categories }: Props) {
         {medium && (
           <Link
             href={`/marketplace/search?category=${medium.slug}`}
-            className="md:col-span-3 row-span-2 group relative rounded-2xl overflow-hidden bg-card border border-border block"
+            className="md:col-span-3 md:row-span-2 group relative rounded-2xl overflow-hidden bg-card border border-border block min-h-[180px] md:min-h-0"
           >
             <CategoryImage slug={medium.slug} alt={medium.name} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -161,8 +161,8 @@ export function TrendingCategories({ categories }: Props) {
           </Link>
         )}
 
-        {/* Right column — two stacked small cards (full-height stretch) */}
-        <div className="md:col-span-3 md:row-span-2 grid grid-rows-2 gap-3 h-full">
+        {/* Right column — two cards. Side-by-side on mobile, stacked on desktop. */}
+        <div className="md:col-span-3 md:row-span-2 grid grid-cols-2 md:grid-cols-1 grid-rows-1 md:grid-rows-2 gap-3 h-full min-h-[140px] md:min-h-0">
           {smallTop && <SmallCard category={smallTop} />}
           {smallBottom && <SmallCard category={smallBottom} />}
         </div>
