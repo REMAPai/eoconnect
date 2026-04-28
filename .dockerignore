@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.local
+.env.vercel
+README.md
+.vscode
+.idea
+npm-debug.log*
+*.log

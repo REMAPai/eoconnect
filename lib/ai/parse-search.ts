@@ -27,7 +27,7 @@ export async function parseSearchQuery(
   try {
     const categoryList = categories.map(c => `${c.slug}: ${c.name}`).join('\n')
     const { output } = await generateText({
-      model: 'openai/gpt-5.4-nano',
+      model: 'openai/gpt-5.4-mini',
       output: Output.object({ schema: ParsedSearchSchema }),
       prompt: `You are a search query parser for a B2B marketplace of EO (Entrepreneurs' Organization) member businesses.
 
