@@ -1,8 +1,30 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { ConversationList } from '@/components/messages/conversation-list'
 import { MessageThread } from '@/components/messages/message-thread'
 import { Inbox } from 'lucide-react'
+
+/**
+ * Service-role client for marking messages as read.
+ *
+ * Why: the messages table only had SELECT + INSERT RLS policies until
+ * migration 011 added an UPDATE policy. Until that migration runs in
+ * production, the user-scoped client silently fails (zero rows affected,
+ * no error) and the unread badge in the navbar persists across refreshes.
+ *
+ * Using the service-role client server-side bypasses RLS for this admin-style
+ * operation (we still constrain the WHERE clause to the active user's
+ * conversations and to messages they didn't send themselves, so this isn't
+ * giving anyone elevated read access).
+ */
+function markReadDb() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  )
+}
 
 interface MessagesPageProps {
   searchParams: Promise<{ conversation?: string }>
@@ -86,9 +108,23 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
       .order('created_at', { ascending: true })
     activeMessages = (msgs ?? []) as typeof activeMessages
 
-    // mark as read
-    await db.from('messages').update({ read_at: new Date().toISOString() })
-      .eq('conversation_id', activeId).neq('sender_id', user.id).is('read_at', null)
+    // Mark as read using the service-role client so it works regardless of
+    // whether migration 011 (the messages UPDATE policy) has been applied.
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { error: markErr, count } = await markReadDb()
+        .from('messages')
+        .update({ read_at: new Date().toISOString() }, { count: 'exact' })
+        .eq('conversation_id', activeId)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
+      if (markErr) console.error('[messages] mark-as-read failed:', markErr)
+      else if ((count ?? 0) > 0) console.log(`[messages] marked ${count} messages read in ${activeId}`)
+    } else {
+      // Fallback to user-scoped update if service role isn't configured.
+      // This is the original path; works only after migration 011.
+      await db.from('messages').update({ read_at: new Date().toISOString() })
+        .eq('conversation_id', activeId).neq('sender_id', user.id).is('read_at', null)
+    }
   }
 
   return (
