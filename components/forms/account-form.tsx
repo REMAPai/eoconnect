@@ -10,6 +10,15 @@ import { Upload } from 'lucide-react'
 import { updateProfile } from '@/actions/profile'
 import { ChapterPicker, type Chapter } from '@/components/forms/chapter-picker'
 
+// Map raw membership_type values stored in the DB to display labels.
+// base-ui's Select renders the raw value by default; without this mapping
+// the trigger shows "current_member" with the literal underscore (R2-03).
+const MEMBERSHIP_LABEL: Record<string, string> = {
+  current_member: 'Current EO Member',
+  alumni: 'EO Alumni',
+  accelerator: 'EO Accelerator',
+}
+
 interface Props {
   chapters: Chapter[]
   currentAvatar: string | null
@@ -106,7 +115,9 @@ export function AccountForm({ chapters, currentAvatar, defaultName, defaultChapt
         <Label htmlFor="eo_membership_type">EO Membership Type *</Label>
         <Select value={membershipType} onValueChange={(v: string | null) => setMembershipType(v ?? '')}>
           <SelectTrigger id="eo_membership_type" className="w-full h-10">
-            <SelectValue placeholder="Select your status" />
+            <SelectValue placeholder="Select your status">
+              {(v: string | null) => MEMBERSHIP_LABEL[v ?? ''] ?? 'Select your status'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="current_member">Current EO Member</SelectItem>

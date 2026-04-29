@@ -107,12 +107,25 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
   const parsed = ResetEmailSchema.safeParse({ email: formData.get('email') })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (!siteUrl) {
+    // Without a site URL the email link would be `undefined/reset-password`
+    // — Supabase silently sends the email but the link is broken on click.
+    // Bail loudly so the user sees a real error instead of "check your email"
+    // followed by nothing useful.
+    console.error('[auth] NEXT_PUBLIC_SITE_URL is not set — password reset email link would be invalid')
+    return { error: 'Password reset is not configured on this deployment. Please contact support.' }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    redirectTo: `${siteUrl.replace(/\/$/, '')}/reset-password?type=recovery`,
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[auth] resetPasswordForEmail failed:', error)
+    return { error: error.message }
+  }
   return { error: null }
 }
 

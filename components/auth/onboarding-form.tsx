@@ -10,6 +10,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Sparkles } from 'lucide-react'
 import { ChapterPicker, type Chapter } from '@/components/forms/chapter-picker'
 
+const MEMBERSHIP_LABEL: Record<string, string> = {
+  current_member: 'Current EO Member',
+  alumni: 'EO Alumni',
+  accelerator: 'EO Accelerator',
+}
+
 interface Props {
   chapters: Chapter[]
   defaultName: string
@@ -73,7 +79,9 @@ export function OnboardingForm({ chapters, defaultName, defaultChapter, defaultM
             <Label htmlFor="eo_membership_type">EO Membership Type *</Label>
             <Select value={membershipType} onValueChange={(v: string | null) => setMembershipType(v ?? '')}>
               <SelectTrigger id="eo_membership_type" className="w-full h-10">
-                <SelectValue placeholder="Select your status" />
+                <SelectValue placeholder="Select your status">
+                  {(v: string | null) => MEMBERSHIP_LABEL[v ?? ''] ?? 'Select your status'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="current_member">Current EO Member</SelectItem>
