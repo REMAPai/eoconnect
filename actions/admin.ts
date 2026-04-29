@@ -1,8 +1,19 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+
+// Service-role client for operations that need to bypass RLS
+// (writing to other users' profile rows).
+function adminDb() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  )
+}
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -92,9 +103,17 @@ export async function setMemberStatus(
 ): Promise<{ error: string | null }> {
   const ctx = await requireAdmin()
   if (ctx.error) return { error: ctx.error }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
+  }
 
-  const { error } = await ctx.db.from('profiles').update({ status }).eq('id', userId)
+  const { data, error } = await adminDb()
+    .from('profiles')
+    .update({ status })
+    .eq('id', userId)
+    .select('id')
   if (error) return { error: error.message }
+  if (!data || data.length === 0) return { error: 'No profile updated — user not found' }
   revalidatePath('/admin/members')
   return { error: null }
 }
@@ -106,9 +125,20 @@ export async function setMemberRole(
   const ctx = await requireAdmin()
   if (ctx.error) return { error: ctx.error }
   if (ctx.role !== 'super_admin') return { error: 'Super admin only' }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
+  }
 
-  const { error } = await ctx.db.from('profiles').update({ role }).eq('id', userId)
+  // Service-role write: profile RLS blocks super-admins from updating
+  // other users' rows, and the user-scoped client silently no-ops
+  // (0 rows affected, no error). Bypass RLS for this admin action.
+  const { data, error } = await adminDb()
+    .from('profiles')
+    .update({ role })
+    .eq('id', userId)
+    .select('id')
   if (error) return { error: error.message }
+  if (!data || data.length === 0) return { error: 'No profile updated — user not found' }
   revalidatePath('/admin/members')
   return { error: null }
 }
