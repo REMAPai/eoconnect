@@ -43,50 +43,16 @@ export function Logo({ variant = 'lockup', className, height = 32 }: LogoProps) 
     )
   }
 
-  // Inline lockup recreated from designer reference. Use HTML+CSS
-  // (not SVG text) so the wordmark renders at full font size without
-  // viewBox baseline math eating visual height.
-  const green = '#1a3a2a'
-  const amber = '#c17d2a'
-  const markSize = height
+  // Use the designer-supplied SVG (viewBox cropped to actual content).
+  // Aspect ratio after crop is ~833:201 ≈ 4.14:1.
+  // eslint-disable-next-line @next/next/no-img-element
   return (
-    <span
-      className={cn('inline-flex items-center gap-2 select-none', className)}
-      style={{ height, lineHeight: 1 }}
-      aria-label="member.market"
-      role="img"
-    >
-      <span
-        style={{
-          width: markSize,
-          height: markSize,
-          borderRadius: markSize * 0.2,
-          background: green,
-          color: amber,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontWeight: 700,
-          fontStyle: 'italic',
-          fontSize: markSize * 0.55,
-          flexShrink: 0,
-        }}
-      >
-        mi
-      </span>
-      <span
-        style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontWeight: 700,
-          fontSize: height * 0.85,
-          letterSpacing: '-0.02em',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        <span style={{ color: green }}>member</span>
-        <span style={{ color: amber }}>.market</span>
-      </span>
-    </span>
+    <img
+      src="/images/member-market-logo.svg"
+      alt="member.market"
+      style={{ height, width: 'auto', display: 'block' }}
+      className={cn('flex-shrink-0 select-none', className)}
+      draggable={false}
+    />
   )
 }

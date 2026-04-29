@@ -76,8 +76,8 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
           </div>
 
           <Link href="/marketplace" aria-label="Member Market home">
-            <Logo height={44} className="hidden sm:block" />
-            <Logo variant="mark" height={40} className="sm:hidden" />
+            <Logo height={36} className="hidden sm:block" />
+            <Logo variant="mark" height={36} className="sm:hidden" />
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
