@@ -2,22 +2,48 @@ import 'server-only'
 import { embed } from 'ai'
 import { openai } from '@ai-sdk/openai'
 
+// In-process cache for query embeddings. Search queries repeat heavily —
+// caching across requests on the same warm instance kills the OpenAI round
+// trip for hot keywords ("marketing", "real estate", etc.).
+const embeddingCache = new Map<string, number[]>()
+const EMBEDDING_CACHE_MAX = 500
+const EMBEDDING_TIMEOUT_MS = 3000
+
 /**
  * Get a 1536-dim embedding for a piece of text.
  * Uses text-embedding-3-small (cheap + fast — ~$0.02 per million tokens).
  * Returns null if no API key or on error so callers can no-op gracefully.
+ *
+ * Wraps the OpenAI call in:
+ *   - in-process cache (key: lowercased trimmed text, capped at 500 entries)
+ *   - 3s timeout (prevents pathological OpenAI latency from stalling search)
  */
 export async function getEmbedding(text: string): Promise<number[] | null> {
   if (!process.env.OPENAI_API_KEY) return null
   const trimmed = text.trim()
   if (!trimmed) return null
 
+  const cacheKey = trimmed.toLowerCase().slice(0, 200)
+  const cached = embeddingCache.get(cacheKey)
+  if (cached) return cached
+
   try {
-    const { embedding } = await embed({
-      model: openai.textEmbeddingModel('text-embedding-3-small'),
-      value: trimmed.slice(0, 8000), // OpenAI hard caps ~8K tokens; chars is a safe proxy
-    })
-    return embedding
+    const result = await Promise.race([
+      embed({
+        model: openai.textEmbeddingModel('text-embedding-3-small'),
+        value: trimmed.slice(0, 8000), // OpenAI hard caps ~8K tokens; chars is a safe proxy
+      }).then(r => r.embedding),
+      new Promise<number[]>((_, reject) =>
+        setTimeout(() => reject(new Error('embedding timeout')), EMBEDDING_TIMEOUT_MS)
+      ),
+    ])
+
+    if (embeddingCache.size >= EMBEDDING_CACHE_MAX) {
+      const firstKey = embeddingCache.keys().next().value
+      if (firstKey) embeddingCache.delete(firstKey)
+    }
+    embeddingCache.set(cacheKey, result)
+    return result
   } catch (err) {
     console.error('getEmbedding failed:', err)
     return null

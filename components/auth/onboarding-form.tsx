@@ -72,7 +72,7 @@ export function OnboardingForm({ chapters, defaultName, defaultChapter, defaultM
           <div className="space-y-2">
             <Label htmlFor="eo_membership_type">EO Membership Type *</Label>
             <Select value={membershipType} onValueChange={(v: string | null) => setMembershipType(v ?? '')}>
-              <SelectTrigger id="eo_membership_type">
+              <SelectTrigger id="eo_membership_type" className="w-full h-10">
                 <SelectValue placeholder="Select your status" />
               </SelectTrigger>
               <SelectContent>

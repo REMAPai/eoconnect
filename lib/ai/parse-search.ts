@@ -19,20 +19,50 @@ const ParsedSearchSchema = z.object({
   keywords: z.string().nullable().describe('Remaining descriptive terms for full-text search after removing category and location words. null if no remaining terms.'),
 })
 
+// Per-process LRU-ish cache. Search queries repeat heavily ("marketing",
+// "real estate", etc.) and the parser is a 1-3s OpenAI round trip — caching
+// the parsed result for the lifetime of the serverless instance is plenty
+// to flatten the hot-query latency without any infra.
+const parseCache = new Map<string, ParsedSearch>()
+const PARSE_CACHE_MAX = 200
+
+// Hard timeout so a slow OpenAI response doesn't block the entire search page.
+// At 2.5s we abort and fall through to the embedding-only path — still useful
+// because vector similarity alone returns highly relevant results for most
+// natural-language queries.
+const PARSE_TIMEOUT_MS = 2500
+
+function shouldSkipParser(query: string): boolean {
+  // Single-keyword queries get nothing from the parser — there's no
+  // city/country to extract and the embedding handles category intent.
+  // Cuts ~1.5-3s off "marketing", "developers", "lawyers" type searches.
+  const words = query.trim().split(/\s+/).filter(Boolean)
+  return words.length <= 2 && !/\b(in|at|near|from)\b/i.test(query)
+}
+
 export async function parseSearchQuery(
   query: string,
   categories: Pick<Category, 'slug' | 'name'>[]
 ): Promise<ParsedSearch> {
-  if (!process.env.OPENAI_API_KEY) {
-    return { categorySlugs: [], city: null, country: null, keywords: query }
+  const empty: ParsedSearch = { categorySlugs: [], city: null, country: null, keywords: query }
+  if (!process.env.OPENAI_API_KEY) return empty
+
+  // Fast path: short queries skip the parser entirely.
+  if (shouldSkipParser(query)) {
+    return empty
   }
+
+  const cacheKey = query.trim().toLowerCase()
+  const cached = parseCache.get(cacheKey)
+  if (cached) return cached
 
   try {
     const categoryList = categories.map(c => `${c.slug}: ${c.name}`).join('\n')
-    const { output } = await generateText({
-      model: openai('gpt-5-nano'),
-      output: Output.object({ schema: ParsedSearchSchema }),
-      prompt: `You are a search query parser for a B2B marketplace of EO (Entrepreneurs' Organization) member businesses.
+    const result = await Promise.race([
+      generateText({
+        model: openai('gpt-5-nano'),
+        output: Output.object({ schema: ParsedSearchSchema }),
+        prompt: `You are a search query parser for a B2B marketplace of EO (Entrepreneurs' Organization) member businesses.
 
 Available categories (slug: name):
 ${categoryList}
@@ -46,10 +76,21 @@ Rules:
 - Extract city and country if mentioned (e.g. "in sydney" → city: sydney). Cities should be lowercase.
 - Put remaining descriptive terms in keywords (e.g. "fintech" or "saas"). Leave empty if none.
 - Return empty arrays/strings when uncertain — never invent.`,
-    })
-    return output
+      }).then(r => r.output),
+      new Promise<ParsedSearch>((_, reject) =>
+        setTimeout(() => reject(new Error('parse timeout')), PARSE_TIMEOUT_MS)
+      ),
+    ])
+
+    // Cap cache size — drop oldest when we hit the ceiling.
+    if (parseCache.size >= PARSE_CACHE_MAX) {
+      const firstKey = parseCache.keys().next().value
+      if (firstKey) parseCache.delete(firstKey)
+    }
+    parseCache.set(cacheKey, result)
+    return result
   } catch (err) {
-    console.error('parseSearchQuery failed:', err)
-    return { categorySlugs: [], city: null, country: null, keywords: query }
+    console.error('parseSearchQuery failed (returning empty fallback):', err)
+    return empty
   }
 }

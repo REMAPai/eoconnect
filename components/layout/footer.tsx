@@ -8,9 +8,9 @@ export function Footer() {
           © {new Date().getFullYear()} Member Market · Exclusive to EO Members
         </p>
         <nav className="flex items-center gap-4 text-xs text-muted-foreground">
-          <Link href="#" className="hover:text-foreground">Terms of Service</Link>
-          <Link href="#" className="hover:text-foreground">Privacy Policy</Link>
-          <Link href="#" className="hover:text-foreground">Contact Support</Link>
+          <Link href="/legal/terms" className="hover:text-foreground">Terms of Service</Link>
+          <Link href="/legal/privacy" className="hover:text-foreground">Privacy Policy</Link>
+          <a href="mailto:support@member.market" className="hover:text-foreground">Contact Support</a>
         </nav>
       </div>
     </footer>

@@ -6,7 +6,6 @@ import { useTransition } from 'react'
 import { Settings, User, Menu } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
 import { Logo } from './logo'
-import { MessageIndicator, NotificationBell } from './notification-indicator'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -68,7 +67,7 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link href="/dashboard/services/new" className="flex items-center w-full text-primary font-medium">
-                    + Post Service
+                    + Add Service
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -80,32 +79,43 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
             <Logo variant="mark" height={36} className="sm:hidden" />
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  (link.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(link.href))
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map(link => {
+              const isMessages = link.href === '/dashboard/messages'
+              const showBadge = isMessages && unreadMessages > 0
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1.5',
+                    (link.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(link.href))
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  )}
+                >
+                  {link.label}
+                  {showBadge && (
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-primary text-primary-foreground">
+                      {unreadMessages > 99 ? '99+' : unreadMessages}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </nav>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          {profile && <MessageIndicator initialCount={unreadMessages} userId={profile.id} />}
-          <NotificationBell />
+          {/* R2-05: chat icon removed — duplicates the "Messages" nav link.
+              Unread badge now lives on the nav link itself (see navLinks above).
+              R2-11: NotificationBell hidden until alert behavior is defined.
+              Bring back when push/in-app notifications ship. */}
           <ThemeToggle />
           <Link
             href="/dashboard/services/new"
             className={cn(buttonVariants({ size: 'sm' }), 'hidden sm:inline-flex bg-primary text-primary-foreground font-bold ml-1')}
           >
-            Post Service
+            Add Service
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger className="ml-1 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">

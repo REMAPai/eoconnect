@@ -11,6 +11,13 @@ const ConversationSchema = z.object({
   business_id: z.string().uuid('Invalid business'),
 })
 
+const InquirySchema = z.object({
+  owner_id: z.string().uuid('Invalid owner'),
+  business_id: z.string().uuid('Invalid business'),
+  service_id: z.string().uuid().nullable().optional(),
+  body: z.string().trim().min(1, 'Message is required').max(5000),
+})
+
 const MessageSchema = z.object({
   conversation_id: z.string().uuid(),
   body: z.string().trim().min(1, 'Message cannot be empty').max(5000),
@@ -91,6 +98,113 @@ export async function markMessagesRead(conversationId: string): Promise<void> {
     .eq('conversation_id', conversationId)
     .neq('sender_id', user.id)
     .is('read_at', null)
+}
+
+/**
+ * R2-06: Submit an inquiry from the listing page.
+ *
+ * Unlike `startConversation` (which silently created an empty thread and
+ * redirected), this action creates/reuses the conversation AND sends the
+ * member's first message in one shot. Returns a result so the modal can
+ * confirm to the user before closing.
+ *
+ * If `service_id` is set, the message is prefixed with a small reference
+ * line so the recipient knows which service the inquiry is about.
+ */
+export async function sendInquiry(input: {
+  owner_id: string
+  business_id: string
+  service_id: string | null
+  body: string
+}): Promise<{ error: string | null; conversationId?: string }> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Please sign in to send an inquiry' }
+
+  const parsed = InquirySchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+  const { owner_id, business_id, service_id, body } = parsed.data
+
+  if (user.id === owner_id) {
+    return { error: "You can't send an inquiry to your own listing" }
+  }
+
+  // Reuse an existing conversation about this listing if there is one.
+  const { data: existing } = await db
+    .from('conversations')
+    .select('id')
+    .eq('listing_id', business_id)
+    .contains('participant_ids', [user.id])
+    .maybeSingle() as { data: { id: string } | null }
+
+  let conversationId = existing?.id
+  if (!conversationId) {
+    const { data: created, error: createErr } = await db
+      .from('conversations')
+      .insert({ participant_ids: [user.id, owner_id], listing_id: business_id })
+      .select('id')
+      .single() as { data: { id: string } | null; error: { message: string } | null }
+    if (createErr || !created) return { error: createErr?.message ?? 'Failed to start conversation' }
+    conversationId = created.id
+  }
+
+  // Optional service reference prepended to the message body.
+  let messageBody = body
+  if (service_id) {
+    const { data: svc } = await db
+      .from('services')
+      .select('title')
+      .eq('id', service_id)
+      .maybeSingle() as { data: { title: string } | null }
+    if (svc?.title) {
+      messageBody = `Re: ${svc.title}\n\n${body}`
+    }
+  }
+
+  const { error: msgErr } = await db.from('messages').insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    body: messageBody,
+  })
+  if (msgErr) return { error: msgErr.message }
+
+  // Analytics + email — fire-and-forget so we return fast for the modal.
+  void (async () => {
+    try {
+      await db.rpc('increment_listing_stat', {
+        p_business_id: business_id,
+        p_stat: 'contact_clicks',
+      })
+    } catch (err) {
+      console.error('[analytics] contact_clicks rpc error:', err)
+    }
+    try {
+      const { data: senderProfile } = await db.from('profiles').select('full_name').eq('id', user.id).single()
+      const { data: recipient } = await db
+        .from('profiles')
+        .select('eo_membership_email, full_name')
+        .eq('id', owner_id)
+        .single() as { data: { eo_membership_email: string | null; full_name: string } | null }
+      if (!recipient?.eo_membership_email) return
+      const { data: biz } = await db.from('businesses').select('name').eq('id', business_id).single()
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+      const tpl = newMessageEmail(
+        senderProfile?.full_name ?? 'Someone',
+        biz?.name ?? null,
+        messageBody.slice(0, 200),
+        siteUrl,
+        conversationId!
+      )
+      await sendEmail({ to: recipient.eo_membership_email, subject: tpl.subject, html: tpl.html })
+    } catch (err) {
+      console.error('inquiry email send failed:', err)
+    }
+  })()
+
+  revalidatePath('/dashboard/messages')
+  return { error: null, conversationId }
 }
 
 export async function startConversation(formData: FormData) {
