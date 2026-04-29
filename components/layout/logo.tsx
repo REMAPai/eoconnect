@@ -21,41 +21,72 @@ export function Logo({ variant = 'lockup', className, height = 32 }: LogoProps) 
     return (
       <svg
         viewBox="0 0 40 40"
-        height={height}
-        width={height}
+        style={{ height, width: height, minHeight: height, minWidth: height }}
         className={cn('flex-shrink-0', className)}
         aria-label="Member Market"
         role="img"
       >
-        <rect x="0" y="0" width="40" height="40" rx="8" fill="var(--primary)" />
+        <rect x="0" y="0" width="40" height="40" rx="8" fill="#1a3a2a" />
         <text
           x="20"
-          y="27"
+          y="28"
           textAnchor="middle"
-          fontFamily="var(--font-sans, system-ui)"
-          fontSize="16"
-          fontWeight="800"
-          fill="var(--primary-foreground)"
-          letterSpacing="-0.5"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize="20"
+          fontWeight="700"
+          fill="#c17d2a"
+          fontStyle="italic"
         >
-          MM
+          mi
         </text>
       </svg>
     )
   }
 
-  // Designer file. Source aspect is roughly 3:1 (wide). The natural
-  // viewBox is 900×900 but visible content is only the bottom band, so
-  // we let the file scale by height with `width: auto` to preserve it.
-  // eslint-disable-next-line @next/next/no-img-element
+  // Inline lockup recreated from designer reference. Use HTML+CSS
+  // (not SVG text) so the wordmark renders at full font size without
+  // viewBox baseline math eating visual height.
+  const green = '#1a3a2a'
+  const amber = '#c17d2a'
+  const markSize = height
   return (
-    <img
-      src="/images/member-market-logo.svg"
-      alt="Member Market"
-      height={height}
-      style={{ height, width: 'auto' }}
-      className={cn('flex-shrink-0 select-none', className)}
-      draggable={false}
-    />
+    <span
+      className={cn('inline-flex items-center gap-2 select-none', className)}
+      style={{ height, lineHeight: 1 }}
+      aria-label="member.market"
+      role="img"
+    >
+      <span
+        style={{
+          width: markSize,
+          height: markSize,
+          borderRadius: markSize * 0.2,
+          background: green,
+          color: amber,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          fontWeight: 700,
+          fontStyle: 'italic',
+          fontSize: markSize * 0.55,
+          flexShrink: 0,
+        }}
+      >
+        mi
+      </span>
+      <span
+        style={{
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          fontWeight: 700,
+          fontSize: height * 0.85,
+          letterSpacing: '-0.02em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span style={{ color: green }}>member</span>
+        <span style={{ color: amber }}>.market</span>
+      </span>
+    </span>
   )
 }
