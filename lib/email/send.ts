@@ -1,26 +1,65 @@
 import 'server-only'
-import { Resend } from 'resend'
+import nodemailer, { type Transporter } from 'nodemailer'
 
-let _resend: Resend | null = null
+/**
+ * Transactional email — sends through Hostinger SMTP via nodemailer.
+ *
+ * Required env vars:
+ *   SMTP_HOST      smtp.hostinger.com
+ *   SMTP_PORT      465 (SSL/TLS, recommended) or 587 (STARTTLS)
+ *   SMTP_USER      full mailbox address — accounts@member.market
+ *   SMTP_PASS      mailbox password set in Hostinger control panel
+ *   EMAIL_FROM     "Member Market <accounts@member.market>"
+ *
+ * If SMTP_HOST is missing the call no-ops with a warning so local dev
+ * doesn't crash on missing config (matches the previous Resend behavior).
+ *
+ * Note: Supabase auth emails (sign-up confirm, password reset, magic link)
+ * are NOT routed through this function. Configure those in
+ *   Supabase dashboard → Project Settings → Auth → SMTP Settings
+ * pointing at password@member.market.
+ */
 
-function getClient(): Resend | null {
-  if (_resend) return _resend
-  const key = process.env.RESEND_API_KEY
-  if (!key) return null
-  _resend = new Resend(key)
-  return _resend
+let _transport: Transporter | null = null
+
+function getTransport(): Transporter | null {
+  if (_transport) return _transport
+  const host = process.env.SMTP_HOST
+  if (!host) return null
+
+  const port = Number(process.env.SMTP_PORT ?? 465)
+  _transport = nodemailer.createTransport({
+    host,
+    port,
+    // Hostinger: port 465 = implicit TLS, port 587 = STARTTLS.
+    secure: port === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  })
+  return _transport
 }
 
-const FROM = process.env.EMAIL_FROM ?? 'Member Market <noreply@membermarket.com>'
+const FROM = process.env.EMAIL_FROM ?? 'Member Market <accounts@member.market>'
 
-export async function sendEmail(opts: { to: string; subject: string; html: string }): Promise<{ ok: boolean; error?: string }> {
-  const client = getClient()
-  if (!client) {
-    console.warn(`[email] skipped — no RESEND_API_KEY configured (would send "${opts.subject}" to ${opts.to})`)
-    return { ok: false, error: 'Resend not configured' }
+export async function sendEmail(opts: {
+  to: string
+  subject: string
+  html: string
+}): Promise<{ ok: boolean; error?: string }> {
+  const t = getTransport()
+  if (!t) {
+    console.warn(`[email] skipped — SMTP_HOST not configured (would send "${opts.subject}" to ${opts.to})`)
+    return { ok: false, error: 'SMTP not configured' }
   }
   try {
-    await client.emails.send({ from: FROM, to: opts.to, subject: opts.subject, html: opts.html })
+    await t.sendMail({
+      from: FROM,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    })
     return { ok: true }
   } catch (err) {
     console.error('[email] send failed:', err)
@@ -36,9 +75,9 @@ const wrap = (title: string, body: string) => `
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9f6f0;">
   <div style="max-width:560px;margin:40px auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
     <div style="margin-bottom:24px;display:flex;align-items:center;gap:8px;">
-      <span style="display:inline-block;background:#2d5a3d;color:#f9f6f0;font-weight:800;padding:6px 9px;border-radius:6px;letter-spacing:-0.5px;font-size:14px;line-height:1;">MM</span>
-      <span style="font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1;">
-        <span style="color:#1a1a1a;">member</span><span style="color:#c17d2a;">.market</span>
+      <span style="display:inline-block;background:#0A2218;color:#D4821A;font-weight:800;padding:6px 9px;border-radius:6px;letter-spacing:-0.5px;font-size:14px;line-height:1;font-family:Georgia,serif;font-style:italic;">mi</span>
+      <span style="font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-family:Georgia,serif;">
+        <span style="color:#0A2218;">member</span><span style="color:#D4821A;">.market</span>
       </span>
     </div>
     ${body}
@@ -50,13 +89,13 @@ const wrap = (title: string, body: string) => `
 
 export function welcomeEmail(name: string, siteUrl: string) {
   return wrap('Welcome to Member Market', `
-    <h1 style="font-size:20px;margin:0 0 12px;">Welcome to Member Market, ${name}!</h1>
+    <h1 style="font-size:20px;margin:0 0 12px;">Welcome to Member Market, ${escapeHtml(name)}!</h1>
     <p style="font-size:15px;line-height:1.5;color:#444;">
       You now have access to the EO members' marketplace. Browse trusted businesses run by fellow members,
       send inquiries, and post your own services to reach the network.
     </p>
     <p style="margin-top:24px;">
-      <a href="${siteUrl}/marketplace" style="background:#2d5a3d;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+      <a href="${siteUrl}/marketplace" style="background:#0A2218;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
         Browse the marketplace
       </a>
     </p>
@@ -68,13 +107,13 @@ export function newMessageEmail(senderName: string, businessName: string | null,
   return {
     subject,
     html: wrap(subject, `
-      <h1 style="font-size:18px;margin:0 0 12px;">${senderName} sent you a message</h1>
-      ${businessName ? `<p style="color:#666;font-size:13px;margin:0 0 12px;">re: ${businessName}</p>` : ''}
-      <blockquote style="border-left:3px solid #2d5a3d;padding:8px 16px;margin:16px 0;background:#fafafa;font-size:14px;color:#333;">
+      <h1 style="font-size:18px;margin:0 0 12px;">${escapeHtml(senderName)} sent you a message</h1>
+      ${businessName ? `<p style="color:#666;font-size:13px;margin:0 0 12px;">re: ${escapeHtml(businessName)}</p>` : ''}
+      <blockquote style="border-left:3px solid #0A2218;padding:8px 16px;margin:16px 0;background:#fafafa;font-size:14px;color:#333;">
         ${escapeHtml(preview)}
       </blockquote>
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/dashboard/messages?conversation=${conversationId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/dashboard/messages?conversation=${conversationId}" style="background:#0A2218;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           Reply
         </a>
       </p>
@@ -87,12 +126,12 @@ export function newReviewEmail(reviewerName: string, businessName: string, ratin
   return {
     subject: `${reviewerName} left you a ${rating}-star review`,
     html: wrap('New review', `
-      <h1 style="font-size:18px;margin:0 0 8px;">${reviewerName} reviewed ${businessName}</h1>
-      <p style="font-size:18px;color:#2d5a3d;margin:0 0 16px;letter-spacing:2px;">${stars}</p>
+      <h1 style="font-size:18px;margin:0 0 8px;">${escapeHtml(reviewerName)} reviewed ${escapeHtml(businessName)}</h1>
+      <p style="font-size:18px;color:#0A2218;margin:0 0 16px;letter-spacing:2px;">${stars}</p>
       ${body ? `<blockquote style="border-left:3px solid #ddd;padding:8px 16px;margin:16px 0;background:#fafafa;font-size:14px;color:#333;">${escapeHtml(body)}</blockquote>` : ''}
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/marketplace/${businessId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
-          View & reply
+        <a href="${siteUrl}/marketplace/${businessId}" style="background:#0A2218;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+          View &amp; reply
         </a>
       </p>
     `)
@@ -103,13 +142,13 @@ export function adApprovedEmail(businessName: string, siteUrl: string, campaignI
   return {
     subject: `Your Member Market campaign is live`,
     html: wrap('Campaign live', `
-      <h1 style="font-size:18px;margin:0 0 12px;">Your campaign for ${businessName} is now live</h1>
+      <h1 style="font-size:18px;margin:0 0 12px;">Your campaign for ${escapeHtml(businessName)} is now live</h1>
       <p style="font-size:14px;color:#444;line-height:1.5;">
         Members searching for relevant services will start seeing your sponsored listing.
         Check back to see how it's performing.
       </p>
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#0A2218;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           View campaign
         </a>
       </p>
@@ -121,13 +160,13 @@ export function adRejectedEmail(businessName: string, reason: string, siteUrl: s
   return {
     subject: `Your Member Market campaign needs changes`,
     html: wrap('Campaign rejected', `
-      <h1 style="font-size:18px;margin:0 0 12px;">Your campaign for ${businessName} wasn't approved</h1>
+      <h1 style="font-size:18px;margin:0 0 12px;">Your campaign for ${escapeHtml(businessName)} wasn't approved</h1>
       <p style="font-size:14px;color:#444;line-height:1.5;"><strong>Reason:</strong> ${escapeHtml(reason)}</p>
       <p style="font-size:14px;color:#444;line-height:1.5;">
         You can edit and resubmit your campaign — your budget is still on file.
       </p>
       <p style="margin-top:20px;">
-        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#2d5a3d;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
+        <a href="${siteUrl}/dashboard/ads/${campaignId}" style="background:#0A2218;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
           Edit campaign
         </a>
       </p>
