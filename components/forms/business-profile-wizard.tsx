@@ -13,6 +13,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { ChevronRight, ChevronLeft, Upload, X, FileText } from 'lucide-react'
 import type { Category } from '@/types/database'
+import { LocationPicker } from '@/components/forms/location-picker'
+import {
+  PORTFOLIO_MAX_FILES,
+  PORTFOLIO_MAX_TOTAL_BYTES,
+  formatBytes,
+  validatePortfolioAddition,
+} from '@/lib/portfolio-limits'
 
 const STEPS = ['Business Basics', 'Categories & Keywords', 'Contact Details', 'Media', 'Review & Publish']
 const TEAM_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'] as const
@@ -29,7 +36,7 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
   const [formData, setFormData] = useState({
     name: '', tagline: '', description: '', website: '',
     founded_year: '', team_size: '' as string,
-    city: '', country: '',
+    city: '', country: '', country_code: '',
     category_ids: [] as string[], tags: '',
     phone: '', email: '',
     social_linkedin: '', social_twitter: '',
@@ -75,10 +82,17 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
   }
 
   const handlePortfolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).slice(0, 5 - portfolioFiles.length)
+    const files = Array.from(e.target.files ?? []).slice(0, PORTFOLIO_MAX_FILES - portfolioFiles.length)
     if (!files.length) return
-    setPortfolioFiles(prev => [...prev, ...files].slice(0, 5))
-    setPortfolioPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))].slice(0, 5))
+    const violation = validatePortfolioAddition(portfolioFiles, files)
+    if (violation) {
+      setError(violation)
+      e.target.value = ''
+      return
+    }
+    setError(null)
+    setPortfolioFiles(prev => [...prev, ...files].slice(0, PORTFOLIO_MAX_FILES))
+    setPortfolioPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))].slice(0, PORTFOLIO_MAX_FILES))
     e.target.value = ''
   }
 
@@ -131,6 +145,10 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
       if (cover_url) fd.set('cover_url', cover_url)
       portfolio_urls.forEach(url => fd.append('portfolio_url', url))
       if (formData.custom_categories.trim()) fd.set('custom_categories', formData.custom_categories)
+      // LocationPicker isn't a native form element — set its values explicitly.
+      fd.set('city', formData.city)
+      fd.set('country', formData.country)
+      fd.set('country_code', formData.country_code)
 
       const result = await createBusiness(fd)
       if (result?.error) setError(result.error)
@@ -211,16 +229,16 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City *</Label>
-                <Input id="city" value={formData.city} onChange={e => update('city', e.target.value)} placeholder="London" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">Country *</Label>
-                <Input id="country" value={formData.country} onChange={e => update('country', e.target.value)} placeholder="United Kingdom" required />
-              </div>
-            </div>
+            <LocationPicker
+              countryCode={formData.country_code}
+              city={formData.city}
+              onChange={(loc) => setFormData(prev => ({
+                ...prev,
+                country_code: loc.countryCode,
+                country: loc.countryName,
+                city: loc.city,
+              }))}
+            />
           </div>
         )}
 
@@ -377,17 +395,26 @@ export function BusinessProfileWizard({ categories }: WizardProps) {
                   ))}
                 </div>
               )}
-              {portfolioFiles.length < 5 && (
+              {portfolioFiles.length < PORTFOLIO_MAX_FILES && (
                 <div
                   className="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition-colors"
                   onClick={() => portfolioInputRef.current?.click()}
                 >
                   <Upload className="h-5 w-5 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    {portfolioFiles.length > 0 ? `Add more PDFs (${5 - portfolioFiles.length} remaining)` : 'Upload portfolio PDFs'}
+                    {portfolioFiles.length > 0
+                      ? `Add more PDFs (${PORTFOLIO_MAX_FILES - portfolioFiles.length} remaining)`
+                      : 'Upload portfolio PDFs'}
                   </span>
                 </div>
               )}
+              <p className="text-xs text-muted-foreground">
+                Up to {PORTFOLIO_MAX_FILES} PDFs · {formatBytes(PORTFOLIO_MAX_TOTAL_BYTES)} total ·
+                {' '}
+                <span className={portfolioFiles.reduce((s, f) => s + f.size, 0) > PORTFOLIO_MAX_TOTAL_BYTES ? 'text-destructive font-medium' : ''}>
+                  used: {formatBytes(portfolioFiles.reduce((s, f) => s + f.size, 0))}
+                </span>
+              </p>
               <input ref={portfolioInputRef} type="file" accept="application/pdf,.pdf" multiple className="hidden" onChange={handlePortfolioChange} />
             </div>
           </div>

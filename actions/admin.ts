@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { isInChapterScope } from '@/lib/chapter-scope'
 
 // Service-role client for operations that need to bypass RLS
 // (writing to other users' profile rows).
@@ -20,19 +21,91 @@ async function requireAdmin() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' as const, supabase, db, user: null, role: null }
+  if (!user) {
+    return {
+      error: 'Not authenticated' as const, supabase, db, user: null,
+      role: null as 'member' | 'chapter_admin' | 'super_admin' | null,
+      scopeCountry: null as string | null, scopeCity: null as string | null,
+    }
+  }
 
   const { data: profile } = await db
     .from('profiles')
-    .select('role')
+    .select('role, admin_scope_country, admin_scope_city')
     .eq('id', user.id)
-    .single() as { data: { role: 'member' | 'chapter_admin' | 'super_admin' } | null }
+    .single() as { data: {
+      role: 'member' | 'chapter_admin' | 'super_admin'
+      admin_scope_country: string | null
+      admin_scope_city: string | null
+    } | null }
 
   if (!profile || !['chapter_admin', 'super_admin'].includes(profile.role)) {
-    return { error: 'Not authorized' as const, supabase, db, user, role: null }
+    return {
+      error: 'Not authorized' as const, supabase, db, user,
+      role: null as 'member' | 'chapter_admin' | 'super_admin' | null,
+      scopeCountry: null as string | null, scopeCity: null as string | null,
+    }
   }
 
-  return { error: null, supabase, db, user, role: profile.role }
+  return {
+    error: null, supabase, db, user,
+    role: profile.role,
+    scopeCountry: profile.admin_scope_country,
+    scopeCity: profile.admin_scope_city,
+  }
+}
+
+/**
+ * For chapter_admin: verify the target row is within their assigned scope.
+ * super_admin bypasses (returns true). Returns false if chapter_admin has no
+ * scope configured (refuse rather than allow global writes).
+ *
+ * Businesses inherit their chapter from the owner's profile (businesses don't
+ * carry a chapter tag of their own — see migration 008).
+ */
+async function targetInScope(
+  db: ReturnType<typeof adminDb>,
+  ctx: { role: 'chapter_admin' | 'super_admin'; scopeCountry: string | null; scopeCity: string | null },
+  table: 'profiles' | 'businesses',
+  id: string
+): Promise<boolean> {
+  if (ctx.role === 'super_admin') return true
+  if (!ctx.scopeCountry) return false
+
+  if (table === 'profiles') {
+    const { data } = await db
+      .from('profiles')
+      .select('chapter_country, chapter_city')
+      .eq('id', id)
+      .single() as { data: { chapter_country: string | null; chapter_city: string | null } | null }
+    if (!data) return false
+    return isInChapterScope(data, { country: ctx.scopeCountry, city: ctx.scopeCity })
+  }
+
+  // Businesses → look up owner profile's chapter.
+  const { data: biz } = await db
+    .from('businesses')
+    .select('owner_id')
+    .eq('id', id)
+    .single() as { data: { owner_id: string } | null }
+  if (!biz?.owner_id) return false
+
+  const { data: owner } = await db
+    .from('profiles')
+    .select('chapter_country, chapter_city')
+    .eq('id', biz.owner_id)
+    .single() as { data: { chapter_country: string | null; chapter_city: string | null } | null }
+  if (!owner) return false
+  return isInChapterScope(owner, { country: ctx.scopeCountry, city: ctx.scopeCity })
+}
+
+async function reviewBusinessId(db: ReturnType<typeof adminDb>, reviewId: string): Promise<string | null> {
+  const { data } = await db
+    .from('reviews')
+    .select('business_id')
+    .eq('id', reviewId)
+    .single() as { data: { business_id: string } | null }
+  return data?.business_id ?? null
 }
 
 // ── Categories ────────────────────────────────────────────────
@@ -103,11 +176,17 @@ export async function setMemberStatus(
 ): Promise<{ error: string | null }> {
   const ctx = await requireAdmin()
   if (ctx.error) return { error: ctx.error }
+  if (!ctx.role) return { error: 'Not authorized' }
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
   }
 
-  const { data, error } = await adminDb()
+  const svc = adminDb()
+  if (!(await targetInScope(svc, ctx as { role: 'chapter_admin' | 'super_admin'; scopeCountry: string | null; scopeCity: string | null }, 'profiles', userId))) {
+    return { error: 'This member is outside your chapter scope' }
+  }
+
+  const { data, error } = await svc
     .from('profiles')
     .update({ status })
     .eq('id', userId)
@@ -148,8 +227,22 @@ export async function setMemberRole(
 export async function unflagReview(id: string): Promise<{ error: string | null }> {
   const ctx = await requireAdmin()
   if (ctx.error) return { error: ctx.error }
+  if (!ctx.role) return { error: 'Not authorized' }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
+  }
 
-  const { error } = await ctx.db.from('reviews').update({ flagged: false }).eq('id', id)
+  const svc = adminDb()
+  // Reviews are scoped through their business's chapter.
+  if (ctx.role === 'chapter_admin') {
+    const businessId = await reviewBusinessId(svc, id)
+    if (!businessId) return { error: 'Review not found' }
+    if (!(await targetInScope(svc, ctx as { role: 'chapter_admin'; scopeCountry: string | null; scopeCity: string | null }, 'businesses', businessId))) {
+      return { error: 'This review belongs to a business outside your chapter scope' }
+    }
+  }
+
+  const { error } = await svc.from('reviews').update({ flagged: false }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/reviews')
   return { error: null }
@@ -158,8 +251,21 @@ export async function unflagReview(id: string): Promise<{ error: string | null }
 export async function deleteReview(id: string): Promise<{ error: string | null }> {
   const ctx = await requireAdmin()
   if (ctx.error) return { error: ctx.error }
+  if (!ctx.role) return { error: 'Not authorized' }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
+  }
 
-  const { error } = await ctx.db.from('reviews').delete().eq('id', id)
+  const svc = adminDb()
+  if (ctx.role === 'chapter_admin') {
+    const businessId = await reviewBusinessId(svc, id)
+    if (!businessId) return { error: 'Review not found' }
+    if (!(await targetInScope(svc, ctx as { role: 'chapter_admin'; scopeCountry: string | null; scopeCity: string | null }, 'businesses', businessId))) {
+      return { error: 'This review belongs to a business outside your chapter scope' }
+    }
+  }
+
+  const { error } = await svc.from('reviews').delete().eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/reviews')
   return { error: null }
@@ -173,10 +279,46 @@ export async function setBusinessStatusAdmin(
 ): Promise<{ error: string | null }> {
   const ctx = await requireAdmin()
   if (ctx.error) return { error: ctx.error }
+  if (!ctx.role) return { error: 'Not authorized' }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
+  }
 
-  const { error } = await ctx.db.from('businesses').update({ status }).eq('id', id)
+  const svc = adminDb()
+  if (!(await targetInScope(svc, ctx as { role: 'chapter_admin' | 'super_admin'; scopeCountry: string | null; scopeCity: string | null }, 'businesses', id))) {
+    return { error: 'This business is outside your chapter scope' }
+  }
+
+  const { error } = await svc.from('businesses').update({ status }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/listings')
   revalidatePath('/marketplace')
+  return { error: null }
+}
+
+// ── Chapter admin scope assignment (super_admin only) ────────
+
+export async function setChapterAdminScope(
+  userId: string,
+  scope: { country: string | null; city: string | null }
+): Promise<{ error: string | null }> {
+  const ctx = await requireAdmin()
+  if (ctx.error) return { error: ctx.error }
+  if (ctx.role !== 'super_admin') return { error: 'Super admin only' }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: 'SUPABASE_SERVICE_ROLE_KEY not configured on the server' }
+  }
+
+  const { data, error } = await adminDb()
+    .from('profiles')
+    .update({
+      admin_scope_country: scope.country || null,
+      admin_scope_city: scope.city || null,
+    })
+    .eq('id', userId)
+    .select('id')
+  if (error) return { error: error.message }
+  if (!data || data.length === 0) return { error: 'No profile updated — user not found' }
+  revalidatePath('/admin/members')
   return { error: null }
 }

@@ -11,7 +11,9 @@ const OnboardingSchema = z.object({
     message: 'Select your EO membership type',
   }),
   eo_chapter: z.string().trim().min(1, 'EO chapter is required'),
-  country: z.string().trim().min(1, 'Country is required'),
+  region: z.string().trim().min(1, 'Region is required'),
+  chapter_country: z.string().trim().nullable().optional(),
+  chapter_city: z.string().trim().nullable().optional(),
 })
 
 export async function completeOnboarding(formData: FormData): Promise<{ error: string | null }> {
@@ -25,7 +27,9 @@ export async function completeOnboarding(formData: FormData): Promise<{ error: s
     full_name: formData.get('full_name'),
     eo_membership_type: formData.get('eo_membership_type'),
     eo_chapter: formData.get('eo_chapter'),
-    country: formData.get('country'),
+    region: formData.get('region'),
+    chapter_country: formData.get('chapter_country') || null,
+    chapter_city: formData.get('chapter_city') || null,
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
@@ -36,7 +40,11 @@ export async function completeOnboarding(formData: FormData): Promise<{ error: s
       full_name: parsed.data.full_name,
       eo_membership_type: parsed.data.eo_membership_type,
       eo_chapter: parsed.data.eo_chapter,
-      country: parsed.data.country,
+      region: parsed.data.region,
+      chapter_country: parsed.data.chapter_country || null,
+      chapter_city: parsed.data.chapter_city || null,
+      // Keep legacy `country` text in sync for back-compat with old reads.
+      country: parsed.data.chapter_country || null,
     })
     .eq('id', user.id)
 

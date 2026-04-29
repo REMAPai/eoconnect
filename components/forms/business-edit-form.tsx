@@ -12,11 +12,18 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Upload, X, FileText, ImageIcon } from 'lucide-react'
 import type { Business, Category } from '@/types/database'
+import { LocationPicker } from '@/components/forms/location-picker'
+import {
+  PORTFOLIO_MAX_FILES,
+  PORTFOLIO_MAX_TOTAL_BYTES,
+  formatBytes,
+  validatePortfolioAddition,
+} from '@/lib/portfolio-limits'
 
 const TEAM_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'] as const
 
 interface BusinessEditFormProps {
-  business: Business
+  business: Business & { country_code?: string | null }
   categories: Category[]
 }
 
@@ -43,6 +50,7 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
     team_size: business.team_size ?? '' as string,
     city: business.city ?? '',
     country: business.country ?? '',
+    country_code: business.country_code ?? '',
     phone: business.phone ?? '',
     email: business.email ?? '',
     tags: business.tags?.join(', ') ?? '',
@@ -66,10 +74,20 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
   }
 
   const handlePortfolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const slotsLeft = 5 - portfolioFiles.length - portfolioExisting.length
+    const slotsLeft = PORTFOLIO_MAX_FILES - portfolioFiles.length - portfolioExisting.length
     const files = Array.from(e.target.files ?? []).slice(0, slotsLeft)
     if (!files.length) return
-    setPortfolioFiles(prev => [...prev, ...files].slice(0, 5 - portfolioExisting.length))
+    // Existing portfolio files (already on server) — count as 0 bytes against the
+    // budget since we can't easily fetch their sizes here. The server enforces
+    // the real total against actual stored bytes.
+    const violation = validatePortfolioAddition(portfolioFiles, files)
+    if (violation) {
+      setError(violation)
+      e.target.value = ''
+      return
+    }
+    setError(null)
+    setPortfolioFiles(prev => [...prev, ...files].slice(0, PORTFOLIO_MAX_FILES - portfolioExisting.length))
     e.target.value = ''
   }
 
@@ -184,16 +202,19 @@ export function BusinessEditForm({ business, categories }: BusinessEditFormProps
             <input type="hidden" name="team_size" value={formData.team_size} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
-            <Input id="city" name="city" value={formData.city} onChange={e => update('city', e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="country">Country / Region</Label>
-            <Input id="country" name="country" value={formData.country} onChange={e => update('country', e.target.value)} />
-          </div>
-        </div>
+        <LocationPicker
+          countryCode={formData.country_code}
+          city={formData.city}
+          onChange={(loc) => setFormData(prev => ({
+            ...prev,
+            country_code: loc.countryCode,
+            country: loc.countryName,
+            city: loc.city,
+          }))}
+        />
+        <input type="hidden" name="city" value={formData.city} />
+        <input type="hidden" name="country" value={formData.country} />
+        <input type="hidden" name="country_code" value={formData.country_code} />
       </div>
 
       {/* Categories & Tags */}

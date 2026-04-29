@@ -1,0 +1,1372 @@
+[
+  {
+    "name": "EO Adelaide",
+    "region": "Asia Pacific",
+    "country": "Australia",
+    "city": "Adelaide"
+  },
+  {
+    "name": "EO Albany",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Albany"
+  },
+  {
+    "name": "EO Andhra Pradesh",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Vishakapatnam"
+  },
+  {
+    "name": "EO APAC Bridge",
+    "region": "Asia Pacific",
+    "country": "Singapore",
+    "city": "Singapore",
+    "virtual": true
+  },
+  {
+    "name": "EO Argentina",
+    "region": "Latin America/Caribbean",
+    "country": "Argentina",
+    "city": null
+  },
+  {
+    "name": "EO Arizona",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Phoenix"
+  },
+  {
+    "name": "EO Atlanta",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Atlanta"
+  },
+  {
+    "name": "EO Atlantic Canada",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Halifax"
+  },
+  {
+    "name": "EO Austin",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Austin"
+  },
+  {
+    "name": "EO Austria",
+    "region": "Europe",
+    "country": "Austria",
+    "city": null
+  },
+  {
+    "name": "EO Bahrain",
+    "region": "MEPA",
+    "country": "Bahrain",
+    "city": null
+  },
+  {
+    "name": "EO Baltimore",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Baltimore"
+  },
+  {
+    "name": "EO Bangalore",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Bangalore"
+  },
+  {
+    "name": "EO Bangkok Metropolitan",
+    "region": "Asia Pacific",
+    "country": "Thailand",
+    "city": "Bangkok"
+  },
+  {
+    "name": "EO Bangladesh",
+    "region": "South Asia",
+    "country": "Bangladesh",
+    "city": "Dhaka"
+  },
+  {
+    "name": "EO Barcelona",
+    "region": "Europe",
+    "country": "Spain",
+    "city": "Barcelona"
+  },
+  {
+    "name": "EO Beijing",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Beijing"
+  },
+  {
+    "name": "EO Beijing Metropolitan",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Beijing"
+  },
+  {
+    "name": "EO Belgium",
+    "region": "Europe",
+    "country": "Belgium",
+    "city": null
+  },
+  {
+    "name": "EO Berlin",
+    "region": "Europe",
+    "country": "Germany",
+    "city": "Berlin"
+  },
+  {
+    "name": "EO Beyond Japan Bridge",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Tokyo",
+    "virtual": true
+  },
+  {
+    "name": "EO Bhopal",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Bhopal"
+  },
+  {
+    "name": "EO Birmingham",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Birmingham"
+  },
+  {
+    "name": "EO Bogota",
+    "region": "Latin America/Caribbean",
+    "country": "Colombia",
+    "city": "Bogota"
+  },
+  {
+    "name": "EO Boston",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Boston"
+  },
+  {
+    "name": "EO Bulgaria",
+    "region": "Europe",
+    "country": "Bulgaria",
+    "city": "Sofia"
+  },
+  {
+    "name": "EO Cairo",
+    "region": "MEPA",
+    "country": "Egypt",
+    "city": "Cairo"
+  },
+  {
+    "name": "EO Calgary",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Calgary"
+  },
+  {
+    "name": "EO Canada Bridge",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Edmonton",
+    "virtual": true
+  },
+  {
+    "name": "EO Cancun-Riviera Maya",
+    "region": "Latin America/Caribbean",
+    "country": "Mexico",
+    "city": null
+  },
+  {
+    "name": "EO Cape Town",
+    "region": "MEPA",
+    "country": "South Africa",
+    "city": "Cape Town"
+  },
+  {
+    "name": "EO Charleston",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Charleston"
+  },
+  {
+    "name": "EO Charlotte",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Charlotte"
+  },
+  {
+    "name": "EO Chennai",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Chennai"
+  },
+  {
+    "name": "EO Chicago",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Chicago"
+  },
+  {
+    "name": "EO China East",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Shanghai"
+  },
+  {
+    "name": "EO Cincinnati",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Cincinnati"
+  },
+  {
+    "name": "EO Cleveland",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Cleveland"
+  },
+  {
+    "name": "EO Coimbatore",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Coimbatore"
+  },
+  {
+    "name": "EO Colorado",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Denver"
+  },
+  {
+    "name": "EO Columbus",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Columbus"
+  },
+  {
+    "name": "EO Connecticut",
+    "region": "United States - East",
+    "country": "United States",
+    "city": null
+  },
+  {
+    "name": "EO Costa Rica",
+    "region": "Latin America/Caribbean",
+    "country": "Costa Rica",
+    "city": "San Jose"
+  },
+  {
+    "name": "EO Curitiba",
+    "region": "Latin America/Caribbean",
+    "country": "Brazil",
+    "city": null
+  },
+  {
+    "name": "EO Dalian",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Dalian"
+  },
+  {
+    "name": "EO Dallas",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Dallas"
+  },
+  {
+    "name": "EO DC",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Washington DC"
+  },
+  {
+    "name": "EO Detroit",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Detroit"
+  },
+  {
+    "name": "EO Dominican Republic",
+    "region": "Latin America/Caribbean",
+    "country": "Dominican Republic",
+    "city": "Santo Domingo"
+  },
+  {
+    "name": "EO Dubai",
+    "region": "MEPA",
+    "country": "United Arab Emirates",
+    "city": "Dubai"
+  },
+  {
+    "name": "EO Durban",
+    "region": "MEPA",
+    "country": "South Africa",
+    "city": "Durban"
+  },
+  {
+    "name": "EO Edmonton",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Edmonton"
+  },
+  {
+    "name": "EO El Salvador",
+    "region": "Latin America/Caribbean",
+    "country": "El Salvador",
+    "city": null
+  },
+  {
+    "name": "EO Europe Bridge",
+    "region": "Europe",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "virtual": true
+  },
+  {
+    "name": "EO Fort Worth",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Fort Worth"
+  },
+  {
+    "name": "EO Germany - Rhine Ruhr",
+    "region": "Europe",
+    "country": "Germany",
+    "city": null
+  },
+  {
+    "name": "EO Germany - Southwest",
+    "region": "Europe",
+    "country": "Germany",
+    "city": null
+  },
+  {
+    "name": "EO Global",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Las Vegas"
+  },
+  {
+    "name": "EO Goa",
+    "region": "South Asia",
+    "country": "India",
+    "city": null
+  },
+  {
+    "name": "EO Greater Bay Area Metropolitan",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Hong Kong"
+  },
+  {
+    "name": "EO Greater China Bridge",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Shanghai",
+    "virtual": true
+  },
+  {
+    "name": "EO Greece",
+    "region": "Europe",
+    "country": "Greece",
+    "city": null
+  },
+  {
+    "name": "EO Guadalajara",
+    "region": "Latin America/Caribbean",
+    "country": "Mexico",
+    "city": "Guadalajara"
+  },
+  {
+    "name": "EO Guangzhou",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Guangzhou"
+  },
+  {
+    "name": "EO Guatemala",
+    "region": "Latin America/Caribbean",
+    "country": "Guatemala",
+    "city": "Guatemala City"
+  },
+  {
+    "name": "EO Guayaquil",
+    "region": "Latin America/Caribbean",
+    "country": "Ecuador",
+    "city": null
+  },
+  {
+    "name": "EO Gujarat",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Ahmedabad"
+  },
+  {
+    "name": "EO Gurgaon",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Gurgaon"
+  },
+  {
+    "name": "EO Hamburg",
+    "region": "Europe",
+    "country": "Germany",
+    "city": "Hamburg"
+  },
+  {
+    "name": "EO Hawaii",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Honolulu"
+  },
+  {
+    "name": "EO Hokkaido",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Sapporo"
+  },
+  {
+    "name": "EO Hokuriku",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Niigata"
+  },
+  {
+    "name": "EO Hong Kong",
+    "region": "North Asia",
+    "country": "Hong Kong",
+    "city": "Hong Kong"
+  },
+  {
+    "name": "EO Houston",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Houston"
+  },
+  {
+    "name": "EO Hyderabad",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Hyderabad"
+  },
+  {
+    "name": "EO Ibaraki",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Idaho",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Boise"
+  },
+  {
+    "name": "EO Indonesia",
+    "region": "Asia Pacific",
+    "country": "Indonesia",
+    "city": "Jakarta"
+  },
+  {
+    "name": "EO Indonesia East",
+    "region": "Asia Pacific",
+    "country": "Indonesia",
+    "city": null
+  },
+  {
+    "name": "EO Indore",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Indore"
+  },
+  {
+    "name": "EO Inland Empire",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Riverside"
+  },
+  {
+    "name": "EO Iowa",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Des Moines"
+  },
+  {
+    "name": "EO Ireland",
+    "region": "Europe",
+    "country": "Ireland",
+    "city": "Dublin"
+  },
+  {
+    "name": "EO Islamabad",
+    "region": "MEPA",
+    "country": "Pakistan",
+    "city": null
+  },
+  {
+    "name": "EO Israel",
+    "region": "Europe",
+    "country": "Israel",
+    "city": "Tel Aviv"
+  },
+  {
+    "name": "EO Italy",
+    "region": "Europe",
+    "country": "Italy",
+    "city": "Milan"
+  },
+  {
+    "name": "EO Jaipur",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Jaipur"
+  },
+  {
+    "name": "EO Japan Korea Bridge",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO Jeddah",
+    "region": "MEPA",
+    "country": "Saudi Arabia",
+    "city": "Jeddah"
+  },
+  {
+    "name": "EO Johannesburg",
+    "region": "MEPA",
+    "country": "South Africa",
+    "city": "Johannesburg"
+  },
+  {
+    "name": "EO Jordan",
+    "region": "MEPA",
+    "country": "Jordan",
+    "city": "Amman"
+  },
+  {
+    "name": "EO Kanagawa",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Kansai Metropolitan",
+    "region": "North Asia",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Kansas City",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Kansas City"
+  },
+  {
+    "name": "EO Karachi",
+    "region": "MEPA",
+    "country": "Pakistan",
+    "city": "Karachi"
+  },
+  {
+    "name": "EO Kelowna",
+    "region": "Canada",
+    "country": "Canada",
+    "city": null
+  },
+  {
+    "name": "EO Kenya",
+    "region": "MEPA",
+    "country": "Kenya",
+    "city": null
+  },
+  {
+    "name": "EO Kerala",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Kochi"
+  },
+  {
+    "name": "EO Kobe",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Kobe"
+  },
+  {
+    "name": "EO Kolkata",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Kolkata"
+  },
+  {
+    "name": "EO Korea",
+    "region": "North Asia",
+    "country": "South Korea",
+    "city": "Seoul"
+  },
+  {
+    "name": "EO Kuwait",
+    "region": "MEPA",
+    "country": "Kuwait",
+    "city": "Kuwait City"
+  },
+  {
+    "name": "EO Kyoto",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Kyoto"
+  },
+  {
+    "name": "EO Kyushu",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO LAC Bridge",
+    "region": "Latin America/Caribbean",
+    "country": null,
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO Lahore",
+    "region": "MEPA",
+    "country": "Pakistan",
+    "city": "Lahore"
+  },
+  {
+    "name": "EO Las Vegas",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Las Vegas"
+  },
+  {
+    "name": "EO Lebanon",
+    "region": "MEPA",
+    "country": "Lebanon",
+    "city": null
+  },
+  {
+    "name": "EO Los Angeles",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Los Angeles"
+  },
+  {
+    "name": "EO Los Angeles - Valley",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Woodland Hills"
+  },
+  {
+    "name": "EO Louisiana",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "New Orleans"
+  },
+  {
+    "name": "EO Madrid",
+    "region": "Europe",
+    "country": "Spain",
+    "city": "Madrid"
+  },
+  {
+    "name": "EO Malaysia",
+    "region": "Asia Pacific",
+    "country": "Malaysia",
+    "city": "Kuala Lumpur"
+  },
+  {
+    "name": "EO Melbourne",
+    "region": "Asia Pacific",
+    "country": "Australia",
+    "city": "Melbourne"
+  },
+  {
+    "name": "EO MEPA Bridge",
+    "region": "MEPA",
+    "country": null,
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO Merida",
+    "region": "Latin America/Caribbean",
+    "country": "Mexico",
+    "city": "Merida"
+  },
+  {
+    "name": "EO Mexico City",
+    "region": "Latin America/Caribbean",
+    "country": "Mexico",
+    "city": "Mexico City"
+  },
+  {
+    "name": "EO Minnesota",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Minneapolis"
+  },
+  {
+    "name": "EO Monterrey",
+    "region": "Latin America/Caribbean",
+    "country": "Mexico",
+    "city": "Monterrey"
+  },
+  {
+    "name": "EO Montreal",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Montreal"
+  },
+  {
+    "name": "EO Mumbai",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Mumbai"
+  },
+  {
+    "name": "EO Munich",
+    "region": "Europe",
+    "country": "Germany",
+    "city": "Munich"
+  },
+  {
+    "name": "EO Nagoya",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Nagpur",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Nagpur"
+  },
+  {
+    "name": "EO Nashville",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Nashville"
+  },
+  {
+    "name": "EO Navi Mumbai",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Navi Mumbai"
+  },
+  {
+    "name": "EO Nebraska",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Omaha"
+  },
+  {
+    "name": "EO Nepal",
+    "region": "South Asia",
+    "country": "Nepal",
+    "city": "Kathmandu"
+  },
+  {
+    "name": "EO Netherlands",
+    "region": "Europe",
+    "country": "Netherlands",
+    "city": "Amsterdam"
+  },
+  {
+    "name": "EO New Delhi",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Delhi"
+  },
+  {
+    "name": "EO New Jersey",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Orange"
+  },
+  {
+    "name": "EO New York",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "New York"
+  },
+  {
+    "name": "EO New Zealand",
+    "region": "Asia Pacific",
+    "country": "New Zealand",
+    "city": null
+  },
+  {
+    "name": "EO Nicaragua",
+    "region": "Latin America/Caribbean",
+    "country": "Nicaragua",
+    "city": "Managua"
+  },
+  {
+    "name": "EO Noida",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Noida"
+  },
+  {
+    "name": "EO North Japan",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Sendai"
+  },
+  {
+    "name": "EO North Karnataka",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Belgaum"
+  },
+  {
+    "name": "EO Northeast India",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Guwahati"
+  },
+  {
+    "name": "EO NY Long Island",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Northport"
+  },
+  {
+    "name": "EO Odisha",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Bhubaneswar"
+  },
+  {
+    "name": "EO Okinawa",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Oklahoma City",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Oklahoma City"
+  },
+  {
+    "name": "EO Oman",
+    "region": "MEPA",
+    "country": "Oman",
+    "city": "Muscat"
+  },
+  {
+    "name": "EO Orange County",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Orange County"
+  },
+  {
+    "name": "EO Osaka",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Osaka"
+  },
+  {
+    "name": "EO Ottawa",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Ottawa"
+  },
+  {
+    "name": "EO Pacific Diamond Bridge",
+    "region": "Asia Pacific",
+    "country": null,
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO Panama",
+    "region": "Latin America/Caribbean",
+    "country": "Panama",
+    "city": "Panama City"
+  },
+  {
+    "name": "EO Paris",
+    "region": "Europe",
+    "country": "France",
+    "city": "Paris"
+  },
+  {
+    "name": "EO Perth",
+    "region": "Asia Pacific",
+    "country": "Australia",
+    "city": "Perth"
+  },
+  {
+    "name": "EO Philadelphia",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Philadelphia"
+  },
+  {
+    "name": "EO Philippines",
+    "region": "Asia Pacific",
+    "country": "Philippines",
+    "city": "Metro Manila"
+  },
+  {
+    "name": "EO Philippines South",
+    "region": "Asia Pacific",
+    "country": "Philippines",
+    "city": "Cebu"
+  },
+  {
+    "name": "EO Pittsburgh",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Pittsburgh"
+  },
+  {
+    "name": "EO Poland",
+    "region": "Europe",
+    "country": "Poland",
+    "city": "Warsaw"
+  },
+  {
+    "name": "EO Portland",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Portland"
+  },
+  {
+    "name": "EO Porto Alegre",
+    "region": "Latin America/Caribbean",
+    "country": "Brazil",
+    "city": "Porto Alegre"
+  },
+  {
+    "name": "EO Portugal",
+    "region": "Europe",
+    "country": "Portugal",
+    "city": null
+  },
+  {
+    "name": "EO Puerto Rico",
+    "region": "Latin America/Caribbean",
+    "country": "United States",
+    "city": "San Juan"
+  },
+  {
+    "name": "EO Pune",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Pune"
+  },
+  {
+    "name": "EO Punjab",
+    "region": "South Asia",
+    "country": "India",
+    "city": null
+  },
+  {
+    "name": "EO Quebec",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Quebec City"
+  },
+  {
+    "name": "EO Queensland",
+    "region": "Asia Pacific",
+    "country": "Australia",
+    "city": "Brisbane"
+  },
+  {
+    "name": "EO Queretaro-San Miguel",
+    "region": "Latin America/Caribbean",
+    "country": "Mexico",
+    "city": "Queretaro"
+  },
+  {
+    "name": "EO Quito",
+    "region": "Latin America/Caribbean",
+    "country": "Ecuador",
+    "city": "Quito"
+  },
+  {
+    "name": "EO Raipur",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Raipur"
+  },
+  {
+    "name": "EO Raleigh Durham",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Raleigh"
+  },
+  {
+    "name": "EO Ranchi",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Ranchi"
+  },
+  {
+    "name": "EO Reno Tahoe",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Reno"
+  },
+  {
+    "name": "EO Richmond",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Richmond"
+  },
+  {
+    "name": "EO Rio De Janeiro",
+    "region": "Latin America/Caribbean",
+    "country": "Brazil",
+    "city": "Rio de Janeiro"
+  },
+  {
+    "name": "EO Riyadh",
+    "region": "MEPA",
+    "country": "Saudi Arabia",
+    "city": "Riyadh"
+  },
+  {
+    "name": "EO Russia",
+    "region": "Europe",
+    "country": "Russia",
+    "city": "Moscow"
+  },
+  {
+    "name": "EO Sacramento",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Sacramento"
+  },
+  {
+    "name": "EO San Antonio",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "San Antonio"
+  },
+  {
+    "name": "EO San Diego",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "San Diego"
+  },
+  {
+    "name": "EO San Francisco",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "San Francisco"
+  },
+  {
+    "name": "EO Sao Paulo",
+    "region": "Latin America/Caribbean",
+    "country": "Brazil",
+    "city": "São Paulo"
+  },
+  {
+    "name": "EO Saskatoon",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Saskatoon"
+  },
+  {
+    "name": "EO Saudi East",
+    "region": "MEPA",
+    "country": "Saudi Arabia",
+    "city": null
+  },
+  {
+    "name": "EO Seattle",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Seattle"
+  },
+  {
+    "name": "EO Setouchi",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Shanghai",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Shanghai"
+  },
+  {
+    "name": "EO Shenyang",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Shenyang"
+  },
+  {
+    "name": "EO Shenzhen",
+    "region": "North Asia",
+    "country": "China",
+    "city": "Shenzhen"
+  },
+  {
+    "name": "EO Silicon Valley",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Silicon Valley"
+  },
+  {
+    "name": "EO Singapore",
+    "region": "Asia Pacific",
+    "country": "Singapore",
+    "city": "Singapore"
+  },
+  {
+    "name": "EO South Asia Bridge",
+    "region": "South Asia",
+    "country": "India",
+    "city": "New Delhi",
+    "virtual": true
+  },
+  {
+    "name": "EO South Asia Founders Bridge",
+    "region": "South Asia",
+    "country": null,
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO South Asia Platinum Bridge",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Kolkata",
+    "virtual": true
+  },
+  {
+    "name": "EO South Florida",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Miami"
+  },
+  {
+    "name": "EO Southeast Virginia",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Hampton Roads"
+  },
+  {
+    "name": "EO Southwest Ontario",
+    "region": "Canada",
+    "country": "Canada",
+    "city": null
+  },
+  {
+    "name": "EO Sri Lanka",
+    "region": "South Asia",
+    "country": "Sri Lanka",
+    "city": "Colombo"
+  },
+  {
+    "name": "EO St. Louis",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "St. Louis"
+  },
+  {
+    "name": "EO Suisse Romande",
+    "region": "Europe",
+    "country": "Switzerland",
+    "city": null
+  },
+  {
+    "name": "EO Surat",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Surat"
+  },
+  {
+    "name": "EO Sydney",
+    "region": "Asia Pacific",
+    "country": "Australia",
+    "city": "Sydney"
+  },
+  {
+    "name": "EO Taipei",
+    "region": "North Asia",
+    "country": "Taiwan",
+    "city": "Taipei"
+  },
+  {
+    "name": "EO Tampa Bay",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Tampa"
+  },
+  {
+    "name": "EO Tanzania",
+    "region": "MEPA",
+    "country": "Tanzania",
+    "city": "Dar es Salaam"
+  },
+  {
+    "name": "EO Thailand",
+    "region": "Asia Pacific",
+    "country": "Thailand",
+    "city": "Bangkok"
+  },
+  {
+    "name": "EO Tokyo Central",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Tokyo"
+  },
+  {
+    "name": "EO Tokyo East",
+    "region": "Japan",
+    "country": "Japan",
+    "city": "Tokyo"
+  },
+  {
+    "name": "EO Tokyo Metropolitan",
+    "region": "North Asia",
+    "country": "Japan",
+    "city": "Tokyo"
+  },
+  {
+    "name": "EO Tokyo Platinum",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Tokyo West",
+    "region": "Japan",
+    "country": "Japan",
+    "city": null
+  },
+  {
+    "name": "EO Toronto",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Toronto"
+  },
+  {
+    "name": "EO Tulsa",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Tulsa"
+  },
+  {
+    "name": "EO Turkey",
+    "region": "Europe",
+    "country": "Turkey",
+    "city": null
+  },
+  {
+    "name": "EO Uganda",
+    "region": "MEPA",
+    "country": "Uganda",
+    "city": "Kampala"
+  },
+  {
+    "name": "EO UK-London",
+    "region": "Europe",
+    "country": "United Kingdom",
+    "city": "London"
+  },
+  {
+    "name": "EO US Central Bridge",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO US East Bridge",
+    "region": "United States - East",
+    "country": "United States",
+    "city": null,
+    "virtual": true
+  },
+  {
+    "name": "EO Utah",
+    "region": "United States - West",
+    "country": "United States",
+    "city": "Salt Lake City"
+  },
+  {
+    "name": "EO Uttar Pradesh",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Lucknow"
+  },
+  {
+    "name": "EO Uttarakhand",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Dehradun"
+  },
+  {
+    "name": "EO Vadodara",
+    "region": "South Asia",
+    "country": "India",
+    "city": "Vadodara"
+  },
+  {
+    "name": "EO Vancouver",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Vancouver"
+  },
+  {
+    "name": "EO Vancouver Island",
+    "region": "Canada",
+    "country": "Canada",
+    "city": null
+  },
+  {
+    "name": "EO Vietnam",
+    "region": "Asia Pacific",
+    "country": "Vietnam",
+    "city": null
+  },
+  {
+    "name": "EO West Michigan",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Grand Rapids"
+  },
+  {
+    "name": "EO Western New York",
+    "region": "United States - East",
+    "country": "United States",
+    "city": "Rochester"
+  },
+  {
+    "name": "EO Winnipeg",
+    "region": "Canada",
+    "country": "Canada",
+    "city": "Winnipeg"
+  },
+  {
+    "name": "EO Wisconsin",
+    "region": "United States - Central",
+    "country": "United States",
+    "city": "Milwaukee"
+  },
+  {
+    "name": "EO Zurich",
+    "region": "Europe",
+    "country": "Switzerland",
+    "city": "Zurich"
+  }
+]

@@ -9,7 +9,9 @@ const ProfileSchema = z.object({
   full_name: z.string().trim().min(2, 'Full name required'),
   eo_chapter: z.string().trim().min(1, 'EO chapter required'),
   eo_membership_type: z.enum(['current_member', 'alumni', 'accelerator']),
-  country: z.string().trim().min(1, 'Country required'),
+  region: z.string().trim().min(1, 'Region required'),
+  chapter_country: z.string().trim().nullable().optional(),
+  chapter_city: z.string().trim().nullable().optional(),
 })
 
 export async function updateProfile(formData: FormData): Promise<{ error: string | null }> {
@@ -23,7 +25,9 @@ export async function updateProfile(formData: FormData): Promise<{ error: string
     full_name: formData.get('full_name'),
     eo_chapter: formData.get('eo_chapter'),
     eo_membership_type: formData.get('eo_membership_type'),
-    country: formData.get('country'),
+    region: formData.get('region'),
+    chapter_country: formData.get('chapter_country') || null,
+    chapter_city: formData.get('chapter_city') || null,
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
@@ -37,7 +41,16 @@ export async function updateProfile(formData: FormData): Promise<{ error: string
     return { error: err instanceof Error ? err.message : 'Avatar upload failed' }
   }
 
-  const update: Record<string, unknown> = { ...parsed.data }
+  const update: Record<string, unknown> = {
+    full_name: parsed.data.full_name,
+    eo_chapter: parsed.data.eo_chapter,
+    eo_membership_type: parsed.data.eo_membership_type,
+    region: parsed.data.region,
+    chapter_country: parsed.data.chapter_country || null,
+    chapter_city: parsed.data.chapter_city || null,
+    // Keep legacy `country` text in sync for back-compat with old reads.
+    country: parsed.data.chapter_country || null,
+  }
   if (avatar_url) update.avatar_url = avatar_url
 
   const { error } = await db.from('profiles').update(update).eq('id', user.id)

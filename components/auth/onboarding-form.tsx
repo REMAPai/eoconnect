@@ -8,24 +8,36 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Sparkles } from 'lucide-react'
+import { ChapterPicker, type Chapter } from '@/components/forms/chapter-picker'
 
 interface Props {
+  chapters: Chapter[]
   defaultName: string
   defaultChapter: string
   defaultMembershipType: string
-  defaultCountry: string
 }
 
-export function OnboardingForm({ defaultName, defaultChapter, defaultMembershipType, defaultCountry }: Props) {
+export function OnboardingForm({ chapters, defaultName, defaultChapter, defaultMembershipType }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [membershipType, setMembershipType] = useState(defaultMembershipType)
+  const [chapter, setChapter] = useState<Chapter | null>(
+    chapters.find(c => c.name === defaultChapter) ?? null
+  )
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
+    if (!chapter) {
+      setError('Please select your EO chapter')
+      return
+    }
     const fd = new FormData(e.currentTarget)
     fd.set('eo_membership_type', membershipType)
+    fd.set('eo_chapter', chapter.name)
+    fd.set('region', chapter.region)
+    fd.set('chapter_country', chapter.country ?? '')
+    fd.set('chapter_city', chapter.city ?? '')
     startTransition(async () => {
       const result = await completeOnboarding(fd)
       if (result?.error) setError(result.error)
@@ -72,16 +84,22 @@ export function OnboardingForm({ defaultName, defaultChapter, defaultMembershipT
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="eo_chapter">EO Chapter *</Label>
-            <Input id="eo_chapter" name="eo_chapter" defaultValue={defaultChapter} placeholder="e.g. EO London" required />
+            <Label>EO Chapter *</Label>
+            <ChapterPicker chapters={chapters} value={chapter?.name ?? null} onChange={setChapter} />
+            {chapter && (chapter.country || chapter.city) && (
+              <p className="text-xs text-muted-foreground">
+                Region: <span className="text-foreground">{chapter.region}</span>
+                {chapter.country && <> · Country: <span className="text-foreground">{chapter.country}</span></>}
+                {chapter.city && <> · City: <span className="text-foreground">{chapter.city}</span></>}
+              </p>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="country">Country *</Label>
-            <Input id="country" name="country" defaultValue={defaultCountry} placeholder="e.g. United Kingdom" required />
-          </div>
-
-          <Button type="submit" disabled={isPending || !membershipType} className="w-full bg-primary text-primary-foreground font-bold mt-2">
+          <Button
+            type="submit"
+            disabled={isPending || !membershipType || !chapter}
+            className="w-full bg-primary text-primary-foreground font-bold mt-2"
+          >
             {isPending ? 'Saving…' : 'Continue → list your business'}
           </Button>
 

@@ -6,6 +6,33 @@ import { refreshBusinessEmbedding } from '@/lib/ai/refresh-business-embedding'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { PORTFOLIO_MAX_TOTAL_BYTES, formatBytes } from '@/lib/portfolio-limits'
+
+/**
+ * Sums HEAD-fetched Content-Length for a list of public Supabase Storage URLs.
+ * Used to enforce the portfolio total-size cap server-side: client validation
+ * could be bypassed, but files were already uploaded direct-to-storage by the
+ * time the action runs, so we re-check via the public URL metadata.
+ *
+ * Returns null if any URL fails to report size (we then refuse the write
+ * rather than silently letting through unknown bytes).
+ */
+async function totalBytesFromUrls(urls: string[]): Promise<number | null> {
+  if (urls.length === 0) return 0
+  let total = 0
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { method: 'HEAD' })
+      if (!res.ok) return null
+      const len = res.headers.get('content-length')
+      if (!len) return null
+      total += Number(len)
+    } catch {
+      return null
+    }
+  }
+  return total
+}
 
 const BusinessSchema = z.object({
   name: z.string().min(2, 'Business name required'),
@@ -27,6 +54,7 @@ const BusinessSchema = z.object({
   team_size: z.enum(['1-10', '11-50', '51-200', '201-500', '500+']).optional(),
   city: z.string().optional(),
   country: z.string().optional(),
+  country_code: z.string().length(2).optional().or(z.literal('')),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   category_ids: z.array(z.string()).max(3).optional(),
@@ -51,6 +79,7 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
     team_size: formData.get('team_size'),
     city: formData.get('city'),
     country: formData.get('country'),
+    country_code: formData.get('country_code') || '',
     phone: formData.get('phone'),
     email: formData.get('email'),
     category_ids: formData.getAll('category_ids'),
@@ -89,6 +118,15 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
           portfolio_urls.push(url)
         }
       }
+    }
+
+    // Server-side enforcement of the 25MB total cap.
+    const totalBytes = await totalBytesFromUrls(portfolio_urls)
+    if (totalBytes === null) {
+      return { error: 'Could not verify portfolio file sizes' }
+    }
+    if (totalBytes > PORTFOLIO_MAX_TOTAL_BYTES) {
+      return { error: `Portfolio total ${formatBytes(totalBytes)} exceeds the ${formatBytes(PORTFOLIO_MAX_TOTAL_BYTES)} limit` }
     }
 
     const social_links: Record<string, string> = {}
@@ -183,6 +221,7 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
     team_size: formData.get('team_size'),
     city: formData.get('city'),
     country: formData.get('country'),
+    country_code: formData.get('country_code') || '',
     phone: formData.get('phone'),
     email: formData.get('email'),
     category_ids: formData.getAll('category_ids'),
@@ -221,6 +260,15 @@ export async function updateBusiness(id: string, formData: FormData): Promise<Bu
       }
     }
     const portfolio_urls = [...portfolioKeep, ...newPortfolioUrls].slice(0, 5)
+
+    // Server-side enforcement of the 25MB total cap (kept + newly uploaded).
+    const totalBytes = await totalBytesFromUrls(portfolio_urls)
+    if (totalBytes === null) {
+      return { error: 'Could not verify portfolio file sizes' }
+    }
+    if (totalBytes > PORTFOLIO_MAX_TOTAL_BYTES) {
+      return { error: `Portfolio total ${formatBytes(totalBytes)} exceeds the ${formatBytes(PORTFOLIO_MAX_TOTAL_BYTES)} limit` }
+    }
 
     const social_links: Record<string, string> = {}
     for (const platform of ['linkedin', 'twitter', 'instagram', 'facebook']) {

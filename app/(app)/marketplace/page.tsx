@@ -14,23 +14,65 @@ export default async function MarketplacePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
 
+  // Look up the viewer's chapter so we can split listings into
+  // "From your chapter" vs "Across the EO network".
+  const { data: { user } } = await supabase.auth.getUser()
+  let viewerChapter: { country: string | null; city: string | null; eo_chapter: string | null } | null = null
+  if (user) {
+    const { data: prof } = await db
+      .from('profiles')
+      .select('chapter_country, chapter_city, eo_chapter')
+      .eq('id', user.id)
+      .maybeSingle() as { data: { chapter_country: string | null; chapter_city: string | null; eo_chapter: string | null } | null }
+    if (prof?.chapter_country) {
+      viewerChapter = { country: prof.chapter_country, city: prof.chapter_city, eo_chapter: prof.eo_chapter }
+    }
+  }
+
   const [{ data: categories }, { data: recent }] = await Promise.all([
     db.from('categories').select('*').eq('active', true).order('sort_order'),
+    // Pull recent listings WITH the owner's chapter so we can group client-side.
     db.from('businesses')
-      .select('*')
+      .select('*, owner:profiles!owner_id(chapter_country, chapter_city, eo_chapter)')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
-      .limit(8),
+      .limit(viewerChapter ? 24 : 8),
   ])
 
-  // One sponsored slot at position 0 of "Recently Listed"
-  const recentBusinessIds = (recent ?? []).map((b: Business) => b.id)
+  type BusinessWithOwner = Business & {
+    owner?: { chapter_country: string | null; chapter_city: string | null; eo_chapter: string | null } | null
+  }
+  const all = (recent ?? []) as BusinessWithOwner[]
+
+  // Split: "your chapter" matches by country (and city if viewer's chapter is city-level).
+  const yourChapterListings: BusinessWithOwner[] = []
+  const otherChapterListings: BusinessWithOwner[] = []
+  if (viewerChapter) {
+    for (const b of all) {
+      const oc = b.owner?.chapter_country
+      const ocCity = b.owner?.chapter_city
+      const inScope = oc === viewerChapter.country &&
+        (viewerChapter.city ? ocCity === viewerChapter.city : true)
+      if (inScope) yourChapterListings.push(b)
+      else otherChapterListings.push(b)
+    }
+  }
+  const yourSlice = yourChapterListings.slice(0, 8)
+  const otherSlice = otherChapterListings.slice(0, 8)
+  const fallbackRecent = viewerChapter ? [] : all.slice(0, 8)
+
+  // One sponsored slot at position 0 of the primary list.
+  const recentBusinessIds = all.map((b: Business) => b.id)
   const ads = await pickAds({ page: 'marketplace', limit: 1, excludeBusinessIds: recentBusinessIds })
   let sponsored: { business: Business; campaignId: string } | null = null
   if (ads.length > 0) {
     const { data: bizRows } = await db.from('businesses').select('*').eq('id', ads[0].business_id).maybeSingle() as { data: Business | null }
     if (bizRows) sponsored = { business: bizRows, campaignId: ads[0].id }
   }
+
+  const yourChapterLabel = viewerChapter
+    ? (viewerChapter.eo_chapter ?? (viewerChapter.city ? `${viewerChapter.city}, ${viewerChapter.country}` : viewerChapter.country))
+    : null
 
   return (
     <div className="space-y-12">
@@ -52,12 +94,15 @@ export default async function MarketplacePage() {
         <TrendingCategories categories={categories} />
       )}
 
-      {/* Listings — sponsored injection added in P4-T6 */}
-      {recent && recent.length > 0 && (
+      {/* "From your chapter" — only when viewer has a chapter and there are matches */}
+      {viewerChapter && yourSlice.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Recently Listed</h2>
-            <Link href="/marketplace/search?sort=newest" className="text-sm text-primary hover:underline">
+            <div>
+              <h2 className="text-lg font-bold">From {yourChapterLabel}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Members in your EO chapter</p>
+            </div>
+            <Link href="/marketplace/search?scope=chapter" className="text-sm text-primary hover:underline">
               View All →
             </Link>
           </div>
@@ -69,7 +114,38 @@ export default async function MarketplacePage() {
                 page="marketplace"
               />
             )}
-            {recent.map((b: Parameters<typeof ListingCard>[0]['business']) => (
+            {yourSlice.map(b => (
+              <ListingCard key={b.id} business={b} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* "Across the EO network" — other chapters, or fallback if no viewer chapter */}
+      {(otherSlice.length > 0 || fallbackRecent.length > 0) && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold">
+                {viewerChapter ? 'Across the EO network' : 'Recently Listed'}
+              </h2>
+              {viewerChapter && (
+                <p className="text-xs text-muted-foreground mt-0.5">Listings from other EO chapters</p>
+              )}
+            </div>
+            <Link href="/marketplace/search?sort=newest" className="text-sm text-primary hover:underline">
+              View All →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {!viewerChapter && sponsored && (
+              <SponsoredCard
+                business={sponsored.business}
+                campaignId={sponsored.campaignId}
+                page="marketplace"
+              />
+            )}
+            {(viewerChapter ? otherSlice : fallbackRecent).map(b => (
               <ListingCard key={b.id} business={b} />
             ))}
           </div>

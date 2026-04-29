@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AccountForm } from '@/components/forms/account-form'
+import chaptersData from '@/lib/data/eo-chapters.json'
+import type { Chapter } from '@/components/forms/chapter-picker'
 import type { Profile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
+
+const CHAPTERS = chaptersData as Chapter[]
 
 export default async function AccountPage() {
   const supabase = await createClient()
@@ -12,9 +16,9 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, avatar_url, eo_chapter, eo_membership_type, country')
+    .select('id, full_name, avatar_url, eo_chapter, eo_membership_type')
     .eq('id', user.id)
-    .single() as { data: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'eo_chapter' | 'eo_membership_type' | 'country'> | null }
+    .single() as { data: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'eo_chapter' | 'eo_membership_type'> | null }
 
   return (
     <div className="max-w-xl mx-auto">
@@ -25,11 +29,11 @@ export default async function AccountPage() {
         </p>
       </div>
       <AccountForm
+        chapters={CHAPTERS}
         currentAvatar={profile?.avatar_url ?? null}
         defaultName={profile?.full_name ?? ''}
         defaultChapter={profile?.eo_chapter ?? ''}
         defaultMembershipType={profile?.eo_membership_type ?? ''}
-        defaultCountry={profile?.country ?? ''}
       />
     </div>
   )
