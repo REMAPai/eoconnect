@@ -15,6 +15,7 @@ import {
 import { signOut } from '@/actions/auth'
 import type { Profile } from '@/types/database'
 import { cn } from '@/lib/utils'
+import { MessagesNavLink } from './messages-nav-link'
 
 interface NavbarProps {
   profile: Profile | null
@@ -80,8 +81,18 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(link => {
-              const isMessages = link.href === '/dashboard/messages'
-              const showBadge = isMessages && unreadMessages > 0
+              if (link.href === '/dashboard/messages') {
+                return (
+                  <MessagesNavLink
+                    key={link.href}
+                    userId={profile?.id ?? null}
+                    initialUnread={unreadMessages}
+                    baseClass="px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1.5"
+                    activeClass="bg-primary/10 text-primary"
+                    idleClass="text-muted-foreground hover:text-foreground hover:bg-muted"
+                  />
+                )
+              }
               return (
                 <Link
                   key={link.href}
@@ -94,11 +105,6 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
                   )}
                 >
                   {link.label}
-                  {showBadge && (
-                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-primary text-primary-foreground">
-                      {unreadMessages > 99 ? '99+' : unreadMessages}
-                    </span>
-                  )}
                 </Link>
               )
             })}

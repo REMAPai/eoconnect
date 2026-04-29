@@ -64,11 +64,26 @@ function useIsDark(mode: 'auto' | 'dark' | 'light'): boolean {
     }
     if (typeof window === 'undefined') return
     const root = document.documentElement
-    const update = () => setIsDark(root.classList.contains('dark'))
+    // next-themes is configured with attribute="data-theme" in app/layout.tsx,
+    // so we watch that attribute. Also fall back to system preference and the
+    // `class="dark"` convention for safety.
+    const update = () => {
+      const dataTheme = root.getAttribute('data-theme')
+      if (dataTheme === 'dark') return setIsDark(true)
+      if (dataTheme === 'light') return setIsDark(false)
+      // 'system' (or unset) → follow the OS preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      setIsDark(prefersDark || root.classList.contains('dark'))
+    }
     update()
     const observer = new MutationObserver(update)
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
-    return () => observer.disconnect()
+    observer.observe(root, { attributes: true, attributeFilter: ['data-theme', 'class'] })
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    mq.addEventListener('change', update)
+    return () => {
+      observer.disconnect()
+      mq.removeEventListener('change', update)
+    }
   }, [mode])
 
   return isDark

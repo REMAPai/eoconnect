@@ -29,6 +29,7 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 import { InquiryDialog } from '@/components/marketplace/inquiry-dialog'
+import { externalUrl } from '@/lib/external-url'
 import { ReviewForm } from '@/components/reviews/review-form'
 import { ReplyForm } from '@/components/reviews/reply-form'
 import { cn } from '@/lib/utils'
@@ -181,16 +182,19 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
               )
             )}
 
-            {business.website && (
-              <a
-                href={business.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(buttonVariants({ variant: 'outline' }), 'w-full gap-2')}
-              >
-                <Globe className="h-4 w-4" /> Visit Website
-              </a>
-            )}
+            {(() => {
+              const w = externalUrl(business.website)
+              return w ? (
+                <a
+                  href={w}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(buttonVariants({ variant: 'outline' }), 'w-full gap-2')}
+                >
+                  <Globe className="h-4 w-4" /> Visit Website
+                </a>
+              ) : null
+            })()}
 
             <div className="pt-2 space-y-2 text-sm text-muted-foreground">
               {business.founded_year && (
@@ -219,14 +223,17 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
               )}
             </div>
 
-            {/* Social icons — only render those that are populated */}
+            {/* Social icons — only render those that are populated.
+                URLs are normalized through externalUrl() so legacy entries like
+                "www.linkedin.com/in/foo" (no protocol) don't get treated as
+                same-origin relative paths by the browser. */}
             {business.social_links && (() => {
               const socials = business.social_links as Record<string, string>
               const items: Array<{ key: string; url: string; Icon: (p: React.SVGProps<SVGSVGElement>) => React.JSX.Element; label: string }> = []
-              if (socials.linkedin) items.push({ key: 'linkedin', url: socials.linkedin, Icon: LinkedinIcon, label: 'LinkedIn' })
-              if (socials.twitter) items.push({ key: 'twitter', url: socials.twitter, Icon: TwitterIcon, label: 'X / Twitter' })
-              if (socials.instagram) items.push({ key: 'instagram', url: socials.instagram, Icon: InstagramIcon, label: 'Instagram' })
-              if (socials.facebook) items.push({ key: 'facebook', url: socials.facebook, Icon: FacebookIcon, label: 'Facebook' })
+              const li = externalUrl(socials.linkedin); if (li) items.push({ key: 'linkedin', url: li, Icon: LinkedinIcon, label: 'LinkedIn' })
+              const tw = externalUrl(socials.twitter);  if (tw) items.push({ key: 'twitter', url: tw, Icon: TwitterIcon, label: 'X / Twitter' })
+              const ig = externalUrl(socials.instagram); if (ig) items.push({ key: 'instagram', url: ig, Icon: InstagramIcon, label: 'Instagram' })
+              const fb = externalUrl(socials.facebook); if (fb) items.push({ key: 'facebook', url: fb, Icon: FacebookIcon, label: 'Facebook' })
               if (items.length === 0) return null
               return (
                 <div className="pt-3 border-t border-border flex items-center gap-2">
@@ -261,17 +268,20 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <p className="font-medium text-sm truncate">{business.profiles.full_name}</p>
-                    {business.profiles.linkedin_url && (
-                      <a
-                        href={business.profiles.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${business.profiles.full_name ?? 'Owner'} on LinkedIn`}
-                        className="text-muted-foreground hover:text-[#0A66C2] transition-colors"
-                      >
-                        <LinkedinIcon className="h-3.5 w-3.5 fill-current" />
-                      </a>
-                    )}
+                    {(() => {
+                      const url = externalUrl(business.profiles.linkedin_url)
+                      return url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${business.profiles.full_name ?? 'Owner'} on LinkedIn`}
+                          className="text-muted-foreground hover:text-[#0A66C2] transition-colors"
+                        >
+                          <LinkedinIcon className="h-3.5 w-3.5 fill-current" />
+                        </a>
+                      ) : null
+                    })()}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                     {business.profiles.eo_membership_type && (
