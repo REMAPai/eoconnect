@@ -142,7 +142,7 @@ export async function createBusiness(formData: FormData): Promise<BusinessAction
     }
 
     revalidatePath('/marketplace')
-    redirect('/dashboard/listings')
+    redirect('/dashboard/services')
   } catch (err) {
     if (err instanceof Error && err.message.includes('NEXT_REDIRECT')) throw err
     return { error: err instanceof Error ? err.message : 'Failed to create business' }
@@ -264,7 +264,7 @@ export async function updateBusinessStatus(
     .eq('owner_id', user.id)
 
   if (error) return { error: error.message }
-  revalidatePath('/dashboard/listings')
+  revalidatePath('/dashboard/services')
   revalidatePath('/marketplace')
   return { error: null }
 }

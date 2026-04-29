@@ -11,7 +11,7 @@ export function NewListingClient({ businessId }: NewListingClientProps) {
     <PostServiceWizard
       businessId={businessId}
       onSuccess={() => {
-        window.location.href = '/dashboard/listings'
+        window.location.href = '/dashboard/services'
       }}
     />
   )

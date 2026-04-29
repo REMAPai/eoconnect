@@ -75,7 +75,7 @@ export default async function AdminBusinessServicesPage({ params }: Props) {
                 </div>
               </div>
               <Link
-                href={`/dashboard/listings/${service.id}`}
+                href={`/dashboard/services/${service.id}`}
                 className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
               >
                 Edit

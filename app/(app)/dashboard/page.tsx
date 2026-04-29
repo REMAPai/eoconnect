@@ -141,12 +141,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </Link>
       </div>
 
-      {/* MM-10: Manage Listings + Messages promoted above analytics */}
+      {/* MM-10: Manage Services + Messages promoted above analytics */}
       <div className={`grid grid-cols-1 ${ADS_ENABLED ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
-        <Link href="/dashboard/listings" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
+        <Link href="/dashboard/services" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
           <LayoutList className="w-5 h-5 text-primary mb-3" />
           <p className="text-sm text-muted-foreground">Manage</p>
-          <p className="text-xl font-bold mt-0.5">Listings</p>
+          <p className="text-xl font-bold mt-0.5">Services</p>
         </Link>
         <Link href="/dashboard/messages" className="block p-6 bg-card border border-border rounded-xl hover:border-primary transition-colors">
           <Inbox className="w-5 h-5 text-primary mb-3" />

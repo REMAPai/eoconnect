@@ -110,7 +110,7 @@ export default async function ListingsPage() {
                   </span>
                 ) : (
                   <Link
-                    href={`/dashboard/listings/new?business=${biz.id}`}
+                    href={`/dashboard/services/new?business=${biz.id}`}
                     className={cn(buttonVariants({ size: 'sm' }), 'bg-primary text-primary-foreground font-bold gap-1 flex-shrink-0')}
                   >
                     + Add Service ({bizServices.length}/3)
@@ -153,7 +153,7 @@ export default async function ListingsPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Link
-                          href={`/dashboard/listings/${service.id}`}
+                          href={`/dashboard/services/${service.id}`}
                           className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
                         >
                           Edit

@@ -83,7 +83,7 @@ export async function createService(business_id: string, formData: FormData): Pr
 
   if (error) return { error: error.message }
   void refreshBusinessEmbedding(db, business_id)
-  revalidatePath('/dashboard/listings')
+  revalidatePath('/dashboard/services')
   revalidatePath(`/marketplace/${business_id}`)
   return { error: null, id: data.id }
 }
@@ -128,7 +128,7 @@ export async function updateService(id: string, formData: FormData): Promise<Ser
   if (error) return { error: error.message }
 
   void refreshBusinessEmbedding(db, service.business_id)
-  revalidatePath('/dashboard/listings')
+  revalidatePath('/dashboard/services')
   revalidatePath(`/marketplace/${service.business_id}`)
   return { error: null }
 }
@@ -155,7 +155,7 @@ export async function deleteService(id: string): Promise<ServiceActionResult> {
   if (error) return { error: error.message }
 
   void refreshBusinessEmbedding(db, service.business_id)
-  revalidatePath('/dashboard/listings')
+  revalidatePath('/dashboard/services')
   revalidatePath(`/marketplace/${service.business_id}`)
   return { error: null }
 }

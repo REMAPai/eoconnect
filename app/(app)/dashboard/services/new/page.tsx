@@ -53,7 +53,7 @@ export default async function NewListingPage({ searchParams }: Props) {
         <h1 className="text-2xl font-bold text-center mb-2">Add a Service</h1>
         <p className="text-muted-foreground text-center mb-8">
           Adding to <span className="text-foreground font-medium">{target.name}</span> ·{' '}
-          <Link href="/dashboard/listings/new" className="text-primary hover:underline">change</Link>
+          <Link href="/dashboard/services/new" className="text-primary hover:underline">change</Link>
         </p>
         <NewListingClient businessId={target.id} />
       </div>
@@ -71,7 +71,7 @@ export default async function NewListingPage({ searchParams }: Props) {
         {list.map(b => (
           <Link
             key={b.id}
-            href={`/dashboard/listings/new?business=${b.id}`}
+            href={`/dashboard/services/new?business=${b.id}`}
             className="flex items-center gap-4 bg-card border border-border rounded-xl p-4 hover:border-primary transition-colors"
           >
             <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">

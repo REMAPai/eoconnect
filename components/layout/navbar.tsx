@@ -67,7 +67,7 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
                 })}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Link href="/dashboard/listings/new" className="flex items-center w-full text-primary font-medium">
+                  <Link href="/dashboard/services/new" className="flex items-center w-full text-primary font-medium">
                     + Post Service
                   </Link>
                 </DropdownMenuItem>
@@ -102,7 +102,7 @@ export function Navbar({ profile, unreadMessages = 0, adsEnabled = false }: Navb
           <NotificationBell />
           <ThemeToggle />
           <Link
-            href="/dashboard/listings/new"
+            href="/dashboard/services/new"
             className={cn(buttonVariants({ size: 'sm' }), 'hidden sm:inline-flex bg-primary text-primary-foreground font-bold ml-1')}
           >
             Post Service

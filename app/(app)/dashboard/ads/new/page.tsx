@@ -20,7 +20,7 @@ export default async function NewCampaignPage() {
   const business = (businessRows as Array<{ id: string; name: string; status: string; category_ids: string[]; tags: string[] }> | null)?.[0] ?? null
 
   if (!business) redirect('/dashboard/business/new')
-  if (business.status !== 'published') redirect('/dashboard/listings')
+  if (business.status !== 'published') redirect('/dashboard/services')
 
   const stripeReady = !!process.env.STRIPE_SECRET_KEY
 

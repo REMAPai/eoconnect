@@ -9,6 +9,24 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  // /dashboard/listings was renamed to /dashboard/services so the term
+  // 'listing' can mean exactly one thing (the business profile on the
+  // marketplace). Permanent redirects keep external links / bookmarks
+  // pointing at the old route working.
+  async redirects() {
+    return [
+      {
+        source: '/dashboard/listings',
+        destination: '/dashboard/services',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/listings/:path*',
+        destination: '/dashboard/services/:path*',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       {

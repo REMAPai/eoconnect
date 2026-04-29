@@ -66,8 +66,8 @@ export function EditServiceForm({ service }: EditServiceFormProps) {
         setError(result.error)
       } else {
         setSuccess(true)
-        // MM-08: jump back to the listings overview after a brief success flash
-        router.push('/dashboard/listings')
+        // MM-08: jump back to the services overview after a brief success flash
+        router.push('/dashboard/services')
         router.refresh()
       }
     })
