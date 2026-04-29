@@ -164,8 +164,26 @@ function CitySearch({
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Reset results when the dialog closes or the country changes — otherwise
+  // stale cities from a previous country can briefly flash on next open.
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+      setResults([])
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open || !countryCode) return
+    // Don't show anything until the user types — a country like Australia
+    // has 4000+ cities, and showing the first 80 alphabetically (Abbey,
+    // Abbotsford, Albany…) makes it look like a generic worldwide list,
+    // not Australia-specific. Forcing search keeps the UI honest.
+    if (!query.trim()) {
+      setResults([])
+      setLoading(false)
+      return
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     setLoading(true)
     debounceRef.current = setTimeout(async () => {
@@ -231,7 +249,9 @@ function CitySearch({
           )}
           {!loading && results.length === 0 && (
             <div className="px-5 py-10 text-center text-sm text-muted-foreground">
-              {query ? `No city matches "${query}" in ${countryName}` : 'Start typing to search'}
+              {query
+                ? `No city matches "${query}" in ${countryName}`
+                : `Start typing to search cities in ${countryName || 'this country'}`}
             </div>
           )}
           {!loading && results.map((c, i) => {
