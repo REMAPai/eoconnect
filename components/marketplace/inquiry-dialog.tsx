@@ -93,7 +93,11 @@ export function InquiryDialog({
               <Label htmlFor="service_id">Which service are you interested in?</Label>
               <Select value={serviceId || undefined} onValueChange={(v: string | null) => setServiceId(v ?? '')}>
                 <SelectTrigger id="service_id" className="w-full h-10">
-                  <SelectValue placeholder="Pick a service…" />
+                  <SelectValue placeholder="Pick a service…">
+                    {/* base-ui's Select renders the raw value (a UUID) by default —
+                        map it back to the human-readable service title here. */}
+                    {(v: string | null) => services.find(s => s.id === v)?.title ?? 'Pick a service…'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {services.map(s => (

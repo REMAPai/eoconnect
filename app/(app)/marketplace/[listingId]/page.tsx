@@ -310,7 +310,15 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
               const filename = (() => {
                 try {
                   const last = decodeURIComponent(url.split('/').pop() ?? '').split('?')[0]
-                  return last || `Document ${i + 1}`
+                  // Storage paths are prefixed with `<timestamp>-<random>-<safeName>`
+                  // (e.g. "1777399978266-ag7hko-copy_of_private_ai_white_paper.pdf").
+                  // Strip the bookkeeping prefix so the user sees just the original
+                  // filename. Pattern: digits-then-alphanum-then-hyphen at the start.
+                  const cleaned = last.replace(/^\d{10,}-[a-z0-9]+-/i, '')
+                  // Also turn underscores back into spaces for readability (we
+                  // sanitized them on upload).
+                  const human = cleaned.replace(/_/g, ' ')
+                  return human || `Document ${i + 1}`
                 } catch {
                   return `Document ${i + 1}`
                 }
