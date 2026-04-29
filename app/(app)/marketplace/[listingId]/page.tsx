@@ -51,7 +51,7 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
   const db = supabase as any
 
   const [{ data: business }, { data: services }, { data: reviews }, { data: categories }] = await Promise.all([
-    db.from('businesses').select('*, profiles!owner_id(full_name, avatar_url, eo_chapter, eo_membership_type)').eq('id', listingId).eq('status', 'published').single(),
+    db.from('businesses').select('*, profiles!owner_id(full_name, avatar_url, eo_chapter, eo_membership_type, linkedin_url)').eq('id', listingId).eq('status', 'published').single(),
     db.from('services').select('*').eq('business_id', listingId).eq('status', 'published'),
     db.from('reviews').select('*, profiles!reviewer_id(full_name, avatar_url)').eq('business_id', listingId).eq('flagged', false).order('created_at', { ascending: false }),
     supabase.from('categories').select('id, name').eq('active', true),
@@ -255,8 +255,21 @@ export default async function ListingDetailPage({ params }: ListingDetailProps) 
                     {(business.profiles.full_name ?? '?').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm truncate">{business.profiles.full_name}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium text-sm truncate">{business.profiles.full_name}</p>
+                    {business.profiles.linkedin_url && (
+                      <a
+                        href={business.profiles.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${business.profiles.full_name ?? 'Owner'} on LinkedIn`}
+                        className="text-muted-foreground hover:text-[#0A66C2] transition-colors"
+                      >
+                        <LinkedinIcon className="h-3.5 w-3.5 fill-current" />
+                      </a>
+                    )}
+                  </div>
                   <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                     {business.profiles.eo_membership_type && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0">

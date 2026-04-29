@@ -16,9 +16,9 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, avatar_url, eo_chapter, eo_membership_type')
+    .select('id, full_name, avatar_url, eo_chapter, eo_membership_type, linkedin_url')
     .eq('id', user.id)
-    .single() as { data: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'eo_chapter' | 'eo_membership_type'> | null }
+    .single() as { data: (Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'eo_chapter' | 'eo_membership_type'> & { linkedin_url: string | null }) | null }
 
   return (
     <div className="max-w-xl mx-auto">
@@ -34,6 +34,7 @@ export default async function AccountPage() {
         defaultName={profile?.full_name ?? ''}
         defaultChapter={profile?.eo_chapter ?? ''}
         defaultMembershipType={profile?.eo_membership_type ?? ''}
+        defaultLinkedinUrl={profile?.linkedin_url ?? ''}
       />
     </div>
   )

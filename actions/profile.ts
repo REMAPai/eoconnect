@@ -12,6 +12,18 @@ const ProfileSchema = z.object({
   region: z.string().trim().min(1, 'Region required'),
   chapter_country: z.string().trim().nullable().optional(),
   chapter_city: z.string().trim().nullable().optional(),
+  // Auto-prepend https:// for plain "linkedin.com/in/foo" entries.
+  // Empty string passes through (field is optional).
+  linkedin_url: z.preprocess(v => {
+    if (typeof v !== 'string') return v
+    const t = v.trim()
+    if (!t) return ''
+    if (/^https?:\/\//i.test(t)) return t
+    return `https://${t}`
+  }, z.string().regex(
+    /^https?:\/\/([a-z0-9-]+\.)?linkedin\.com\//i,
+    'Must be a linkedin.com URL'
+  ).or(z.literal(''))).optional(),
 })
 
 export async function updateProfile(formData: FormData): Promise<{ error: string | null }> {
@@ -28,6 +40,7 @@ export async function updateProfile(formData: FormData): Promise<{ error: string
     region: formData.get('region'),
     chapter_country: formData.get('chapter_country') || null,
     chapter_city: formData.get('chapter_city') || null,
+    linkedin_url: formData.get('linkedin_url') ?? '',
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
@@ -50,6 +63,7 @@ export async function updateProfile(formData: FormData): Promise<{ error: string
     chapter_city: parsed.data.chapter_city || null,
     // Keep legacy `country` text in sync for back-compat with old reads.
     country: parsed.data.chapter_country || null,
+    linkedin_url: parsed.data.linkedin_url || null,
   }
   if (avatar_url) update.avatar_url = avatar_url
 

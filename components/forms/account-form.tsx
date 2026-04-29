@@ -16,9 +16,10 @@ interface Props {
   defaultName: string
   defaultChapter: string
   defaultMembershipType: string
+  defaultLinkedinUrl: string
 }
 
-export function AccountForm({ chapters, currentAvatar, defaultName, defaultChapter, defaultMembershipType }: Props) {
+export function AccountForm({ chapters, currentAvatar, defaultName, defaultChapter, defaultMembershipType, defaultLinkedinUrl }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -125,6 +126,22 @@ export function AccountForm({ chapters, currentAvatar, defaultName, defaultChapt
             {chapter.city && <> · City: <span className="text-foreground">{chapter.city}</span></>}
           </p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="linkedin_url">
+          LinkedIn <span className="text-muted-foreground text-xs">(optional)</span>
+        </Label>
+        <Input
+          id="linkedin_url"
+          name="linkedin_url"
+          type="url"
+          defaultValue={defaultLinkedinUrl}
+          placeholder="https://linkedin.com/in/your-handle"
+        />
+        <p className="text-xs text-muted-foreground">
+          Shown next to your name on listings so members can connect.
+        </p>
       </div>
 
       <Button type="submit" disabled={isPending || !membershipType || !chapter} className="w-full bg-primary text-primary-foreground font-bold">
