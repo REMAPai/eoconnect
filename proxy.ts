@@ -17,17 +17,25 @@ export async function proxy(request: NextRequest) {
   const user = session?.user ?? null
   const pathname = request.nextUrl.pathname
 
+  // Build redirect targets against the configured public URL when possible.
+  // Behind a reverse proxy (Dokploy/Traefik) that doesn't forward the Host
+  // header, request.url shows the container's internal bind ('0.0.0.0:3000')
+  // and that origin leaks into every middleware redirect target.
+  const publicBase = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
+  const redirectTo = (path: string) =>
+    NextResponse.redirect(new URL(path, publicBase || request.url))
+
   const protectedPaths = ['/dashboard', '/marketplace', '/admin', '/onboarding']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
   const authPages = ['/login', '/signup', '/reset-password', '/verify', '/suspended']
   const isAuthPage = authPages.some(p => pathname.startsWith(p))
 
   if (!user && isProtected) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return redirectTo('/login')
   }
 
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL('/marketplace', request.url))
+    return redirectTo('/marketplace')
   }
 
   if (!user) return response
@@ -72,12 +80,12 @@ export async function proxy(request: NextRequest) {
   }
 
   if (profile?.status === 'suspended' && pathname !== '/suspended') {
-    return NextResponse.redirect(new URL('/suspended', request.url))
+    return redirectTo('/suspended')
   }
 
   if (pathname.startsWith('/admin')) {
     if (!profile || !['chapter_admin', 'super_admin'].includes(profile.role)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return redirectTo('/dashboard')
     }
   }
 
@@ -93,7 +101,7 @@ export async function proxy(request: NextRequest) {
       pathname === '/'
 
     if (!exemptFromOnboardingGate && (!p.eo_membership_type || !p.country)) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
+      return redirectTo('/onboarding')
     }
 
     const exemptFromBusinessGate =
@@ -109,7 +117,7 @@ export async function proxy(request: NextRequest) {
         .maybeSingle() as { data: { id: string } | null; error: unknown }
 
       if (!business) {
-        return NextResponse.redirect(new URL('/dashboard/business/new', request.url))
+        return redirectTo('/dashboard/business/new')
       }
     }
   }
