@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { z } from 'zod'
 import { sendEmail, newMessageEmail } from '@/lib/email/send'
 
@@ -54,8 +55,10 @@ export async function sendMessage(formData: FormData): Promise<{ error: string |
 
   if (error) return { error: error.message }
 
-  // Fire-and-forget email to the other participant
-  void (async () => {
+  // Notification email — runs after the response is flushed so the action
+  // returns fast for the UI, but the runtime keeps the worker alive until
+  // the SMTP send actually completes.
+  after(async () => {
     try {
       const otherIds = (conv.participant_ids as string[]).filter((id: string) => id !== user.id)
       if (otherIds.length === 0) return
@@ -65,7 +68,10 @@ export async function sendMessage(formData: FormData): Promise<{ error: string |
         .select('eo_membership_email, full_name')
         .eq('id', otherIds[0])
         .single() as { data: { eo_membership_email: string | null; full_name: string } | null }
-      if (!recipient?.eo_membership_email) return
+      if (!recipient?.eo_membership_email) {
+        console.warn('[email] message recipient has no eo_membership_email — skipping notification')
+        return
+      }
 
       let businessName: string | null = null
       const { data: convRow } = await db.from('conversations').select('listing_id').eq('id', parsed.data.conversation_id).single()
@@ -75,11 +81,16 @@ export async function sendMessage(formData: FormData): Promise<{ error: string |
       }
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
       const tpl = newMessageEmail(senderProfile?.full_name ?? 'Someone', businessName, parsed.data.body.slice(0, 200), siteUrl, parsed.data.conversation_id)
-      await sendEmail({ to: recipient.eo_membership_email, subject: tpl.subject, html: tpl.html })
+      const result = await sendEmail({ to: recipient.eo_membership_email, subject: tpl.subject, html: tpl.html })
+      if (result.ok) {
+        console.log(`[email] message notification sent to ${recipient.eo_membership_email}`)
+      } else {
+        console.error('[email] message notification failed:', result.error)
+      }
     } catch (err) {
-      console.error('email send failed:', err)
+      console.error('[email] message email send failed:', err)
     }
-  })()
+  })
 
   revalidatePath('/dashboard/messages')
   return { error: null }
@@ -170,8 +181,15 @@ export async function sendInquiry(input: {
   })
   if (msgErr) return { error: msgErr.message }
 
-  // Analytics + email — fire-and-forget so we return fast for the modal.
-  void (async () => {
+  // Post-response work: analytics + notification email.
+  //
+  // We use Next.js's after() instead of a fire-and-forget IIFE because the
+  // serverless runtime will terminate as soon as the action returns —
+  // unawaited promises can be killed before the SMTP send completes,
+  // resulting in silent missed emails. after() keeps the request alive
+  // until the callback resolves, then shuts down cleanly.
+  const finalConversationId = conversationId
+  after(async () => {
     try {
       await db.rpc('increment_listing_stat', {
         p_business_id: business_id,
@@ -187,7 +205,10 @@ export async function sendInquiry(input: {
         .select('eo_membership_email, full_name')
         .eq('id', owner_id)
         .single() as { data: { eo_membership_email: string | null; full_name: string } | null }
-      if (!recipient?.eo_membership_email) return
+      if (!recipient?.eo_membership_email) {
+        console.warn('[email] inquiry recipient has no eo_membership_email — skipping notification')
+        return
+      }
       const { data: biz } = await db.from('businesses').select('name').eq('id', business_id).single()
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
       const tpl = newMessageEmail(
@@ -195,13 +216,18 @@ export async function sendInquiry(input: {
         biz?.name ?? null,
         messageBody.slice(0, 200),
         siteUrl,
-        conversationId!
+        finalConversationId!
       )
-      await sendEmail({ to: recipient.eo_membership_email, subject: tpl.subject, html: tpl.html })
+      const result = await sendEmail({ to: recipient.eo_membership_email, subject: tpl.subject, html: tpl.html })
+      if (result.ok) {
+        console.log(`[email] inquiry notification sent to ${recipient.eo_membership_email}`)
+      } else {
+        console.error('[email] inquiry notification failed:', result.error)
+      }
     } catch (err) {
-      console.error('inquiry email send failed:', err)
+      console.error('[email] inquiry email send failed:', err)
     }
-  })()
+  })
 
   revalidatePath('/dashboard/messages')
   return { error: null, conversationId }
