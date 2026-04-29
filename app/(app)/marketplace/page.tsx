@@ -45,14 +45,20 @@ export default async function MarketplacePage() {
   const all = (recent ?? []) as BusinessWithOwner[]
 
   // Split: "your chapter" matches by country (and city if viewer's chapter is city-level).
+  //
+  // Resolution order for a listing's "country":
+  //   1. owner.chapter_country  (preferred — explicit chapter selection)
+  //   2. business.country       (fallback — business's own location field)
+  // This way listings still group correctly when the owner hasn't onboarded
+  // their chapter yet (early adopters, imports, etc.).
   const yourChapterListings: BusinessWithOwner[] = []
   const otherChapterListings: BusinessWithOwner[] = []
   if (viewerChapter) {
     for (const b of all) {
-      const oc = b.owner?.chapter_country
-      const ocCity = b.owner?.chapter_city
-      const inScope = oc === viewerChapter.country &&
-        (viewerChapter.city ? ocCity === viewerChapter.city : true)
+      const country = b.owner?.chapter_country ?? b.country ?? null
+      const city = b.owner?.chapter_country ? b.owner.chapter_city : (b.city ?? null)
+      const inScope = country === viewerChapter.country &&
+        (viewerChapter.city ? city === viewerChapter.city : true)
       if (inScope) yourChapterListings.push(b)
       else otherChapterListings.push(b)
     }
